@@ -1,5 +1,6 @@
 """Module C — Hash Workbench Page."""
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -23,7 +24,9 @@ from PySide6.QtWidgets import (
 )
 
 from haxmed_cryptolab.core.constants import LEGACY_INSECURE_HASHES, SUPPORTED_HASH_ALGORITHMS
+from haxmed_cryptolab.engines.analysis.detector import SmartDetector
 from haxmed_cryptolab.engines.hashes.identifier import IDENTIFICATION_DISCLAIMER
+from haxmed_cryptolab.models import DetectedCategory
 from haxmed_cryptolab.services.hash_service import HashService
 from haxmed_cryptolab.ui.i18n import i18n
 from haxmed_cryptolab.ui.widgets.code_display import CodeDisplay
@@ -111,7 +114,15 @@ class HashPage(QWidget):
         self.frame_text_in = QFrame()
         self.frame_text_in.setObjectName("card")
         tin_l = QVBoxLayout(self.frame_text_in)
-        tin_l.addWidget(QLabel("Enter Text to Hash:"))
+
+        t_hdr = QHBoxLayout()
+        t_hdr.addWidget(QLabel("Enter Text to Hash (or paste a Hash to Auto-Detect):"))
+        btn_detect_hash = QPushButton(i18n.tr("btn_auto_detect"))
+        btn_detect_hash.clicked.connect(self._auto_detect_hash_input)
+        t_hdr.addStretch()
+        t_hdr.addWidget(btn_detect_hash)
+        tin_l.addLayout(t_hdr)
+
         self.txt_hash_in = QPlainTextEdit()
         tin_l.addWidget(self.txt_hash_in)
         lay.addWidget(self.frame_text_in)
@@ -142,6 +153,35 @@ class HashPage(QWidget):
         lay.addWidget(self.display_digest)
 
         return w
+
+    def _auto_detect_hash_input(self):
+        text = self.txt_hash_in.toPlainText().strip()
+        if not text:
+            QMessageBox.warning(
+                self, "Auto-Detect", "Please enter or paste a hash digest to inspect."
+            )
+            return
+
+        report = SmartDetector.analyze(text)
+        if report.category == DetectedCategory.HASH:
+            algo = report.metadata.get("algo")
+            if algo:
+                idx = self.combo_hash_algo.findText(algo, Qt.MatchContains)
+                if idx >= 0:
+                    self.combo_hash_algo.setCurrentIndex(idx)
+            QMessageBox.information(
+                self,
+                "Auto-Detect: Hash Recognized",
+                f"🎯 {report.suggested_algorithm} [{report.confidence} CONFIDENCE]\n\n"
+                f"{report.summary}\n\n{report.details}",
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "Auto-Detect Result",
+                f"🎯 {report.suggested_algorithm} [{report.confidence} CONFIDENCE]\n\n"
+                f"{report.summary}\n\n{report.details}",
+            )
 
     def _check_legacy_warning(self):
         algo = self.combo_hash_algo.currentText()

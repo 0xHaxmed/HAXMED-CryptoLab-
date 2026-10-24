@@ -23,7 +23,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from haxmed_cryptolab.engines.analysis.detector import SmartDetector
 from haxmed_cryptolab.engines.classical.caesar import CaesarCipher
+from haxmed_cryptolab.models import DetectedCategory
 from haxmed_cryptolab.services.crypto_service import CryptoService
 from haxmed_cryptolab.ui.i18n import i18n
 from haxmed_cryptolab.ui.widgets.code_display import CodeDisplay
@@ -127,11 +129,19 @@ class EncryptionPage(QWidget):
         in_frame.setObjectName("card")
         in_layout = QVBoxLayout(in_frame)
         in_layout.setContentsMargins(10, 8, 10, 8)
+
+        in_hdr = QHBoxLayout()
         lbl_in = QLabel(i18n.tr("enc_input_label"))
         lbl_in.setStyleSheet("font-weight: 600; color: #E02235;")
+        btn_detect = QPushButton(i18n.tr("btn_auto_detect"))
+        btn_detect.clicked.connect(self._auto_detect_classical_input)
+        in_hdr.addWidget(lbl_in)
+        in_hdr.addStretch()
+        in_hdr.addWidget(btn_detect)
+        in_layout.addLayout(in_hdr)
+
         self.txt_class_in = QPlainTextEdit()
         self.txt_class_in.setPlaceholderText("Enter plaintext or ciphertext here...")
-        in_layout.addWidget(lbl_in)
         in_layout.addWidget(self.txt_class_in)
 
         # Output Box
@@ -248,6 +258,70 @@ class EncryptionPage(QWidget):
             with open(path, "r", encoding="utf-8", errors="replace") as f:
                 self.txt_class_in.setPlainText(f.read())
 
+    def _auto_detect_classical_input(self):
+        text = self.txt_class_in.toPlainText()
+        if not text.strip():
+            QMessageBox.warning(self, "Auto-Detect", "Please enter or paste text to detect.")
+            return
+
+        report = SmartDetector.analyze(text)
+        if report.category == DetectedCategory.AES_GCM_CONTAINER:
+            self.tabs.setCurrentIndex(1)
+            self.modern_tabs.setCurrentIndex(0)
+            self.txt_aes_in.setPlainText(text)
+            QMessageBox.information(
+                self,
+                "Auto-Detect: AES-GCM Container",
+                f"🎯 {report.summary}\n\nAuto-redirected to Modern AES-GCM workspace.",
+            )
+        elif report.category in (DetectedCategory.RSA_CIPHERTEXT, DetectedCategory.PEM_KEY):
+            self.tabs.setCurrentIndex(1)
+            self.modern_tabs.setCurrentIndex(1)
+            self.txt_rsa_in.setPlainText(text)
+            QMessageBox.information(
+                self,
+                f"Auto-Detect: {report.suggested_algorithm}",
+                f"🎯 {report.summary}\n\nAuto-redirected to Modern RSA-OAEP workspace.",
+            )
+        elif report.category == DetectedCategory.CAESAR_CIPHER:
+            shift = report.metadata.get("shift", 3)
+            self.combo_classical.setCurrentText("Caesar Cipher")
+            self.txt_class_key.setText(str(shift))
+            preview = report.metadata.get("preview", "")
+            QMessageBox.information(
+                self,
+                "Auto-Detect: Caesar Cipher",
+                f"🎯 {report.summary}\n\nConfidence: {report.confidence}\n"
+                f"Candidate Plaintext Preview:\n'{preview[:100]}'\n\n"
+                f"Shift has been automatically set to {shift}. Click 'Decrypt' to decrypt full text.",
+            )
+        elif report.category == DetectedCategory.CLASSICAL_SUBSTITUTION:
+            self.combo_classical.setCurrentText("Monoalphabetic Substitution")
+            QMessageBox.information(
+                self,
+                "Auto-Detect: Substitution Cipher",
+                f"🎯 {report.summary}\n\n{report.details}",
+            )
+        elif report.category == DetectedCategory.POLYALPHABETIC_CIPHER:
+            self.combo_classical.setCurrentText("Vigenère Cipher")
+            QMessageBox.information(
+                self,
+                "Auto-Detect: Polyalphabetic Cipher",
+                f"🎯 {report.summary}\n\n{report.details}",
+            )
+        elif report.category == DetectedCategory.HASH:
+            QMessageBox.information(
+                self,
+                "Auto-Detect: Hash Digest",
+                f"🎯 {report.summary}\n\nThis is a one-way hash digest ({report.suggested_algorithm}), not an encryption ciphertext. You can analyze it in the Hash Workbench.",
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "Auto-Detect Result",
+                f"{report.summary}\n\n{report.details}",
+            )
+
     # -------------------------------------------------------------
     # MODERN CRYPTOGRAPHY WORKSPACE
     # -------------------------------------------------------------
@@ -257,12 +331,12 @@ class EncryptionPage(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
 
-        modern_tabs = QTabWidget()
-        modern_tabs.addTab(self._create_aes_subtab(), "AES-GCM (Authenticated)")
-        modern_tabs.addTab(self._create_rsa_oaep_subtab(), "RSA-OAEP (Public Key)")
-        modern_tabs.addTab(self._create_rsa_pss_subtab(), "RSA-PSS (Digital Signature)")
+        self.modern_tabs = QTabWidget()
+        self.modern_tabs.addTab(self._create_aes_subtab(), "AES-GCM (Authenticated)")
+        self.modern_tabs.addTab(self._create_rsa_oaep_subtab(), "RSA-OAEP (Public Key)")
+        self.modern_tabs.addTab(self._create_rsa_pss_subtab(), "RSA-PSS (Digital Signature)")
 
-        layout.addWidget(modern_tabs)
+        layout.addWidget(self.modern_tabs)
         return widget
 
     def _create_aes_subtab(self) -> QWidget:
@@ -304,7 +378,17 @@ class EncryptionPage(QWidget):
         in_f = QFrame()
         in_f.setObjectName("card")
         in_l = QVBoxLayout(in_f)
-        in_l.addWidget(QLabel("Plaintext (for Encrypt) or JSON Container Envelope (for Decrypt):"))
+
+        in_hdr = QHBoxLayout()
+        in_hdr.addWidget(
+            QLabel("Plaintext (for Encrypt) or JSON Container Envelope (for Decrypt):")
+        )
+        btn_detect_aes = QPushButton(i18n.tr("btn_auto_detect"))
+        btn_detect_aes.clicked.connect(self._auto_detect_aes_input)
+        in_hdr.addStretch()
+        in_hdr.addWidget(btn_detect_aes)
+        in_l.addLayout(in_hdr)
+
         self.txt_aes_in = QPlainTextEdit()
         in_l.addWidget(self.txt_aes_in)
 
@@ -314,6 +398,19 @@ class EncryptionPage(QWidget):
         lay.addWidget(splitter)
 
         return w
+
+    def _auto_detect_aes_input(self):
+        text = self.txt_aes_in.toPlainText()
+        if not text.strip():
+            QMessageBox.warning(self, "Auto-Detect", "Please enter or paste data to detect.")
+            return
+        report = SmartDetector.analyze(text)
+        QMessageBox.information(
+            self,
+            "Auto-Detect Result",
+            f"🎯 {report.suggested_algorithm} [{report.confidence} CONFIDENCE]\n\n"
+            f"{report.summary}\n\n{report.details}",
+        )
 
     def _gen_aes_key(self):
         key = self.crypto_service.generate_aes_key()

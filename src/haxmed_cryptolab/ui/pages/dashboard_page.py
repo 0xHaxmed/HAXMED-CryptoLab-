@@ -1,4 +1,4 @@
-"""Module A — Dashboard Landing Page."""
+"""Module A — Dashboard Landing Page with Universal Crypto Inspector."""
 
 import platform
 import sys
@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
+    QPlainTextEdit,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -17,13 +19,16 @@ from PySide6.QtWidgets import (
 )
 
 from haxmed_cryptolab.core.constants import APP_NAME, APP_SLOGAN, APP_VERSION
+from haxmed_cryptolab.engines.analysis.detector import SmartDetector
+from haxmed_cryptolab.models import DetectionReport
+from haxmed_cryptolab.services.analysis_service import AnalysisService
 from haxmed_cryptolab.services.crypto_service import CryptoService
 from haxmed_cryptolab.services.history_service import HistoryService
 from haxmed_cryptolab.ui.i18n import i18n
 
 
 class DashboardPage(QWidget):
-    """Professional landing page with branding, diagnostics, and quick shortcuts."""
+    """Professional landing page with branding, diagnostics, and universal auto-detector."""
 
     navigate_requested = Signal(str)  # target page key
 
@@ -31,11 +36,14 @@ class DashboardPage(QWidget):
         self,
         crypto_service: CryptoService,
         history_service: HistoryService,
+        analysis_service: AnalysisService,
         parent=None,
     ):
         super().__init__(parent)
         self.crypto_service = crypto_service
         self.history_service = history_service
+        self.analysis_service = analysis_service
+        self._last_report: DetectionReport = None
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -95,7 +103,54 @@ class DashboardPage(QWidget):
         metrics_grid.addWidget(self.card_history, 0, 3)
         layout.addLayout(metrics_grid)
 
-        # 3. Quick Navigation Workflows
+        # 3. UNIVERSAL CRYPTO INSPECTOR & AUTO-DETECTOR
+        detect_group = QGroupBox(f"🔍 {i18n.tr('dash_autodetect_title')}")
+        d_lay = QVBoxLayout(detect_group)
+        d_lay.setSpacing(10)
+
+        lbl_desc = QLabel(i18n.tr("dash_autodetect_desc"))
+        lbl_desc.setStyleSheet("color: #8C90A0; font-size: 12px;")
+        d_lay.addWidget(lbl_desc)
+
+        self.txt_inspect_in = QPlainTextEdit()
+        self.txt_inspect_in.setPlaceholderText(
+            "Paste any ciphertext, hash digest ($2b$, SHA-256, MD5...), AES container JSON, or RSA key here..."
+        )
+        self.txt_inspect_in.setMaximumHeight(85)
+        d_lay.addWidget(self.txt_inspect_in)
+
+        # Action Buttons
+        d_btn_row = QHBoxLayout()
+        self.btn_auto_detect = QPushButton(i18n.tr("btn_auto_detect"))
+        self.btn_auto_detect.setObjectName("primary_btn")
+        self.btn_auto_detect.clicked.connect(self._run_auto_detect)
+        d_btn_row.addWidget(self.btn_auto_detect)
+
+        self.btn_action_target = QPushButton("Open in Suggested Studio")
+        self.btn_action_target.setVisible(False)
+        self.btn_action_target.clicked.connect(self._navigate_suggested_action)
+        d_btn_row.addWidget(self.btn_action_target)
+
+        d_btn_row.addStretch()
+        d_lay.addLayout(d_btn_row)
+
+        # Result Banner
+        self.frame_detect_res = QFrame()
+        self.frame_detect_res.setObjectName("card")
+        self.frame_detect_res.setVisible(False)
+        r_lay = QVBoxLayout(self.frame_detect_res)
+        self.lbl_detect_title = QLabel("DETECTION RESULT")
+        self.lbl_detect_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #E02235;")
+        self.lbl_detect_body = QLabel("")
+        self.lbl_detect_body.setStyleSheet("line-height: 140%; color: #E2E4E9;")
+        self.lbl_detect_body.setWordWrap(True)
+        r_lay.addWidget(self.lbl_detect_title)
+        r_lay.addWidget(self.lbl_detect_body)
+        d_lay.addWidget(self.frame_detect_res)
+
+        layout.addWidget(detect_group)
+
+        # 4. Quick Navigation Workflows
         quick_group = QGroupBox(i18n.tr("dash_quick_actions"))
         quick_layout = QHBoxLayout(quick_group)
         quick_layout.setSpacing(12)
@@ -119,7 +174,7 @@ class DashboardPage(QWidget):
         quick_layout.addWidget(btn_ana)
         layout.addWidget(quick_group)
 
-        # 4. Educational Cryptographic Highlights
+        # 5. Educational Cryptographic Highlights
         edu_card = QFrame()
         edu_card.setObjectName("card")
         edu_layout = QVBoxLayout(edu_card)
@@ -140,7 +195,7 @@ class DashboardPage(QWidget):
         edu_layout.addWidget(edu_content)
         layout.addWidget(edu_card)
 
-        # 5. Active Task Status Monitor
+        # 6. Active Task Status Monitor
         task_group = QGroupBox(i18n.tr("dash_active_tasks"))
         task_layout = QVBoxLayout(task_group)
         self.lbl_active_tasks = QLabel(f"🟢 {i18n.tr('dash_no_tasks')}")
@@ -176,6 +231,63 @@ class DashboardPage(QWidget):
         lay.addWidget(lbl_s)
         return card
 
+    def _run_auto_detect(self):
+        text = self.txt_inspect_in.toPlainText()
+        if not text.strip():
+            QMessageBox.warning(self, "Auto-Detector", "Please enter or paste text to analyze.")
+            return
+
+        report = SmartDetector.analyze(text)
+        self._last_report = report
+        self.frame_detect_res.setVisible(True)
+
+        conf_color = (
+            "#28A745"
+            if report.confidence == "HIGH"
+            else ("#FFC107" if report.confidence == "MEDIUM" else "#E02235")
+        )
+        self.lbl_detect_title.setText(
+            f"🎯 {report.suggested_algorithm} <span style='font-size:12px; color:{conf_color};'>[{report.confidence} CONFIDENCE]</span>"
+        )
+        self.lbl_detect_title.setTextFormat(Qt.RichText)
+
+        body_text = f"<b>Summary:</b> {report.summary}<br/><b>Details:</b> {report.details}"
+        self.lbl_detect_body.setText(body_text)
+
+        if report.suggested_action == "DECRYPT_AES":
+            self.btn_action_target.setText("🔓 " + i18n.tr("btn_open_decryptor") + " (AES-GCM)")
+            self.btn_action_target.setVisible(True)
+        elif report.suggested_action == "DECRYPT_CAESAR":
+            self.btn_action_target.setText("🔓 " + i18n.tr("btn_open_decryptor") + " (Caesar)")
+            self.btn_action_target.setVisible(True)
+        elif report.suggested_action == "DECRYPT_RSA":
+            self.btn_action_target.setText("🔓 " + i18n.tr("btn_open_decryptor") + " (RSA)")
+            self.btn_action_target.setVisible(True)
+        elif report.suggested_action == "HASH_WORKBENCH":
+            self.btn_action_target.setText("#️⃣ " + i18n.tr("btn_open_hash"))
+            self.btn_action_target.setVisible(True)
+        elif report.suggested_action == "RECOVERY_LAB":
+            self.btn_action_target.setText("🧪 " + i18n.tr("btn_open_recovery"))
+            self.btn_action_target.setVisible(True)
+        elif report.suggested_action == "CIPHER_ANALYZER":
+            self.btn_action_target.setText("📊 Open in Cipher Analyzer")
+            self.btn_action_target.setVisible(True)
+        else:
+            self.btn_action_target.setVisible(False)
+
+    def _navigate_suggested_action(self):
+        if not self._last_report:
+            return
+        action = self._last_report.suggested_action
+        if action in ("DECRYPT_AES", "DECRYPT_CAESAR", "DECRYPT_RSA", "ENCRYPT_STUDIO"):
+            self.navigate_requested.emit("encryption")
+        elif action == "HASH_WORKBENCH":
+            self.navigate_requested.emit("hash")
+        elif action == "RECOVERY_LAB":
+            self.navigate_requested.emit("recovery")
+        elif action == "CIPHER_ANALYZER":
+            self.navigate_requested.emit("analyzer")
+
     def refresh_stats(self):
         """Update dynamic counters on page display."""
         op_count = str(self.history_service.count_records())
@@ -184,7 +296,6 @@ class DashboardPage(QWidget):
             if self.history_service.config_mgr.config.enable_history
             else i18n.tr("dash_disabled")
         )
-        # update card texts
         card_labels = self.card_history.findChildren(QLabel)
         if len(card_labels) >= 3:
             card_labels[1].setText(hist_status)

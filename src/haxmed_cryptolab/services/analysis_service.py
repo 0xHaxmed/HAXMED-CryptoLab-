@@ -3,11 +3,18 @@
 from typing import Dict, List, Tuple
 
 from haxmed_cryptolab.engines.analysis.caesar_analyzer import CaesarAnalyzer, CaesarCandidate
+from haxmed_cryptolab.engines.analysis.detector import SmartDetector
 from haxmed_cryptolab.engines.analysis.frequency import FrequencyAnalyzer
+from haxmed_cryptolab.models import DetectionReport
 
 
 class AnalysisService:
     """Orchestrates frequency analysis and classical cipher cracking heuristics."""
+
+    @staticmethod
+    def detect_type(text: str) -> DetectionReport:
+        """Automatically classify and identify unknown ciphertexts, hashes, or containers."""
+        return SmartDetector.analyze(text)
 
     @staticmethod
     def analyze_frequencies(text: str) -> Tuple[Dict[str, int], Dict[str, float], float, int]:

@@ -76,7 +76,9 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.pages: Dict[str, QWidget] = {}
 
-        self.page_dashboard = DashboardPage(self.crypto_service, self.history_service)
+        self.page_dashboard = DashboardPage(
+            self.crypto_service, self.history_service, self.analysis_service
+        )
         self.page_dashboard.navigate_requested.connect(self._on_dashboard_navigate)
         self._add_page("dashboard", self.page_dashboard)
 

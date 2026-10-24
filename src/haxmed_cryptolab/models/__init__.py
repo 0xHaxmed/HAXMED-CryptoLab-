@@ -19,6 +19,33 @@ class CryptoCategory(str, Enum):
     ASYMMETRIC = "ASYMMETRIC"
 
 
+class DetectedCategory(str, Enum):
+    HASH = "HASH"
+    AES_GCM_CONTAINER = "AES_GCM_CONTAINER"
+    RSA_CIPHERTEXT = "RSA_CIPHERTEXT"
+    PEM_KEY = "PEM_KEY"
+    CAESAR_CIPHER = "CAESAR_CIPHER"
+    CLASSICAL_SUBSTITUTION = "CLASSICAL_SUBSTITUTION"
+    POLYALPHABETIC_CIPHER = "POLYALPHABETIC_CIPHER"
+    BASE64_BLOB = "BASE64_BLOB"
+    HEX_BLOB = "HEX_BLOB"
+    PLAIN_TEXT = "PLAIN_TEXT"
+    UNKNOWN = "UNKNOWN"
+
+
+@dataclass
+class DetectionReport:
+    """Structured report produced by the Smart Crypto Auto-Detector."""
+
+    category: DetectedCategory
+    suggested_algorithm: str
+    confidence: str  # "HIGH", "MEDIUM", "LOW"
+    summary: str
+    details: str
+    suggested_action: str  # e.g., "DECRYPT_AES", "DECRYPT_CAESAR", "DECRYPT_RSA", "HASH_WORKBENCH", "RECOVERY_LAB"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
 @dataclass
 class CryptoResult:
     """Result of a cryptographic transformation."""
