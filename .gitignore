@@ -42,7 +42,9 @@ data/
 # PyInstaller / Build
 *.spec
 dist/
+release/
 build/
+*.old
 
 # OS Specific
 .DS_Store

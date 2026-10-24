@@ -4,6 +4,7 @@ import platform
 import sys
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
@@ -18,7 +19,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from haxmed_cryptolab.core.constants import APP_NAME, APP_SLOGAN, APP_VERSION
+from haxmed_cryptolab.core.constants import (
+    APP_NAME,
+    APP_SLOGAN,
+    APP_VERSION,
+    LOGO_SHIELD_PATH,
+)
 from haxmed_cryptolab.engines.analysis.detector import SmartDetector
 from haxmed_cryptolab.models import DetectionReport
 from haxmed_cryptolab.services.analysis_service import AnalysisService
@@ -57,11 +63,22 @@ class DashboardPage(QWidget):
         # 1. Branding Header
         header_card = QFrame()
         header_card.setObjectName("card")
-        header_layout = QVBoxLayout(header_card)
-        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout = QHBoxLayout(header_card)
+        header_layout.setContentsMargins(18, 14, 18, 14)
+        header_layout.setSpacing(18)
+
+        if LOGO_SHIELD_PATH.exists():
+            lbl_shield = QLabel()
+            pix = QPixmap(str(LOGO_SHIELD_PATH))
+            if not pix.isNull():
+                lbl_shield.setPixmap(pix.scaledToHeight(68, Qt.SmoothTransformation))
+                header_layout.addWidget(lbl_shield)
+
+        text_vbox = QVBoxLayout()
+        text_vbox.setSpacing(4)
 
         lbl_app = QLabel(
-            f"{APP_NAME} <span style='color:#E02235; font-size:14px;'>v{APP_VERSION}</span>"
+            f"{APP_NAME} <span style='color:#E02235; font-size:14px; font-weight:bold;'>v{APP_VERSION}</span>"
         )
         lbl_app.setTextFormat(Qt.RichText)
         lbl_app.setObjectName("section_title")
@@ -69,8 +86,19 @@ class DashboardPage(QWidget):
         lbl_slogan = QLabel(f"{APP_SLOGAN} — {i18n.tr('brand_tagline')}")
         lbl_slogan.setObjectName("section_desc")
 
-        header_layout.addWidget(lbl_app)
-        header_layout.addWidget(lbl_slogan)
+        lbl_features = QLabel(
+            "<span style='color:#94A3B8; font-size:11px; font-weight:bold; letter-spacing:1px;'>"
+            "ENCRYPT • DECRYPT • HASH • RECOVER • ANALYZE"
+            "</span>"
+        )
+        lbl_features.setTextFormat(Qt.RichText)
+
+        text_vbox.addWidget(lbl_app)
+        text_vbox.addWidget(lbl_slogan)
+        text_vbox.addWidget(lbl_features)
+
+        header_layout.addLayout(text_vbox)
+        header_layout.addStretch()
         layout.addWidget(header_card)
 
         # 2. System Diagnostics Metrics

@@ -1,6 +1,7 @@
 """Application-wide constants, branding, and defaults."""
 
 import os
+import sys
 from pathlib import Path
 
 APP_NAME = "HAXMED CryptoLab"
@@ -25,6 +26,28 @@ except Exception:
 
 DB_PATH = USER_DATA_DIR / "cryptolab.db"
 CONFIG_FILE_PATH = USER_DATA_DIR / "config.json"
+
+# Resource paths (icons, images, logos)
+def get_resource_path(relative_path: str) -> Path:
+    """Resolve resource path for both dev mode and PyInstaller bundle."""
+    if hasattr(sys, "_MEIPASS"):
+        meipass = Path(sys._MEIPASS)
+        candidate = meipass / relative_path
+        if candidate.exists():
+            return candidate
+        candidate2 = meipass / "resources" / relative_path.replace("resources/", "")
+        if candidate2.exists():
+            return candidate2
+        return candidate
+    return Path(__file__).resolve().parent.parent / relative_path
+
+RESOURCES_DIR = get_resource_path("resources")
+ICON_PATH = get_resource_path("resources/icons/app_icon.ico")
+ICON_PNG_PATH = get_resource_path("resources/icons/app_icon.png")
+LOGO_BANNER_PATH = get_resource_path("resources/images/haxmed_logo_banner.png")
+LOGO_SHIELD_PATH = get_resource_path("resources/images/haxmed_shield_transparent.png")
+LOGO_HORIZONTAL_PATH = get_resource_path("resources/images/haxmed_horizontal_logo.png")
+
 
 # UI Defaults
 DEFAULT_THEME = "dark"

@@ -2,7 +2,8 @@
 
 from typing import Dict
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -11,7 +12,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from haxmed_cryptolab.core.constants import APP_NAME, APP_VERSION
+from haxmed_cryptolab.core.constants import (
+    APP_NAME,
+    APP_VERSION,
+    LOGO_HORIZONTAL_PATH,
+)
 from haxmed_cryptolab.ui.dialogs.about_dialog import AboutDialog
 from haxmed_cryptolab.ui.i18n import i18n
 
@@ -34,16 +39,29 @@ class NavigationSidebar(QFrame):
         brand_frame.setObjectName("brand_header")
         brand_lay = QVBoxLayout(brand_frame)
         brand_lay.setContentsMargins(4, 4, 4, 12)
-        brand_lay.setSpacing(2)
+        brand_lay.setSpacing(4)
 
-        self.lbl_brand = QLabel(f"🛡️ {APP_NAME}")
-        self.lbl_brand.setObjectName("brand_title")
+        if LOGO_HORIZONTAL_PATH.exists():
+            self.lbl_logo = QLabel()
+            self.lbl_logo.setAlignment(Qt.AlignCenter)
+            pix = QPixmap(str(LOGO_HORIZONTAL_PATH))
+            if not pix.isNull():
+                self.lbl_logo.setPixmap(pix.scaledToWidth(170, Qt.SmoothTransformation))
+                brand_lay.addWidget(self.lbl_logo)
+            else:
+                self.lbl_brand = QLabel(f"🛡️ {APP_NAME}")
+                self.lbl_brand.setObjectName("brand_title")
+                brand_lay.addWidget(self.lbl_brand)
+        else:
+            self.lbl_brand = QLabel(f"🛡️ {APP_NAME}")
+            self.lbl_brand.setObjectName("brand_title")
+            brand_lay.addWidget(self.lbl_brand)
 
         self.lbl_tagline = QLabel(f"v{APP_VERSION} — Security Lab")
         self.lbl_tagline.setObjectName("brand_tagline")
-
-        brand_lay.addWidget(self.lbl_brand)
+        self.lbl_tagline.setAlignment(Qt.AlignCenter)
         brand_lay.addWidget(self.lbl_tagline)
+
         layout.addWidget(brand_frame)
 
         # 2. Navigation Buttons

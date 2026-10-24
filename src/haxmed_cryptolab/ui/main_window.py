@@ -2,6 +2,7 @@
 
 from typing import Dict
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -12,7 +13,12 @@ from PySide6.QtWidgets import (
 )
 
 from haxmed_cryptolab.core.config import ConfigManager
-from haxmed_cryptolab.core.constants import APP_NAME, APP_VERSION
+from haxmed_cryptolab.core.constants import (
+    APP_NAME,
+    APP_VERSION,
+    ICON_PATH,
+    ICON_PNG_PATH,
+)
 from haxmed_cryptolab.services.analysis_service import AnalysisService
 from haxmed_cryptolab.services.crypto_service import CryptoService
 from haxmed_cryptolab.services.hash_service import HashService
@@ -54,6 +60,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.resize(1120, 740)
         self.setMinimumSize(960, 620)
+
+        icon_to_use = ICON_PNG_PATH if ICON_PNG_PATH.exists() else ICON_PATH
+        if icon_to_use.exists():
+            self.setWindowIcon(QIcon(str(icon_to_use)))
 
         # Apply initial theme & language
         self.apply_theme(self.config_mgr.config.theme)
