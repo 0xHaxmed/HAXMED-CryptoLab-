@@ -1,0 +1,10 @@
+password
+secret
+admin
+welcome
+haxmed
+test123
+letmein
+dragon
+monkey
+qwerty

@@ -1,0 +1,9 @@
+{
+  "language": "en",
+  "theme": "dark",
+  "enable_history": false,
+  "default_export_format": "txt",
+  "chunk_size_kb": 64,
+  "max_recovery_candidates": 1000000,
+  "custom_settings": {}
+}

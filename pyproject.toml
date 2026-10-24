@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=65.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "haxmed-cryptolab"
+version = "1.0.0"
+description = "Professional Cross-Platform Cryptography & Cryptanalysis Desktop Application"
+readme = "README.md"
+authors = [
+    { name = "HAXMED Security Engineering", email = "info@haxmed.local" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "PySide6>=6.6.0",
+    "cryptography>=42.0.0",
+    "bcrypt>=4.0.0",
+    "argon2-cffi>=23.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.4.0",
+    "ruff>=0.3.0",
+    "pyinstaller>=6.5.0",
+]
+
+[project.scripts]
+haxmed-cryptolab = "haxmed_cryptolab.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
