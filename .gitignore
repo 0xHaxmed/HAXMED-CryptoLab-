@@ -38,6 +38,7 @@ htmlcov/
 *.db
 *.sqlite3
 data/
+.data/
 
 # PyInstaller / Build
 *.spec
