@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QFrame,
-    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -44,9 +43,9 @@ class EncryptionPage(QWidget):
         main_layout.setSpacing(12)
 
         # Header Title
-        lbl_title = QLabel(i18n.tr("nav_encryption"))
-        lbl_title.setObjectName("section_title")
-        main_layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(i18n.tr("nav_encryption"))
+        self.lbl_title.setObjectName("section_title")
+        main_layout.addWidget(self.lbl_title)
 
         # Tabs for Classical vs Modern
         self.tabs = QTabWidget()
@@ -67,42 +66,45 @@ class EncryptionPage(QWidget):
         layout.setSpacing(12)
 
         # Educational Warning Banner
-        banner = DisclaimerBanner(i18n.tr("enc_warning_classical"))
-        layout.addWidget(banner)
+        self.banner_classical = DisclaimerBanner(i18n.tr("enc_warning_classical"))
+        layout.addWidget(self.banner_classical)
 
-        # Control Row
+        # Control Card
         ctrl_card = QFrame()
         ctrl_card.setObjectName("card")
-        ctrl_layout = QGridLayout(ctrl_card)
-        ctrl_layout.setContentsMargins(12, 10, 12, 10)
+        ctrl_layout = QVBoxLayout(ctrl_card)
+        ctrl_layout.setContentsMargins(14, 12, 14, 12)
         ctrl_layout.setSpacing(10)
 
-        ctrl_layout.addWidget(QLabel(i18n.tr("enc_algo_label")), 0, 0)
+        # Row 1: Algorithm & Parameters
+        row1 = QHBoxLayout()
+        row1.setSpacing(8)
+        self.lbl_class_algo = QLabel(i18n.tr("enc_algo_label"))
         self.combo_classical = QComboBox()
-        self.combo_classical.addItems(
-            [
-                "Caesar Cipher",
-                "Atbash Cipher",
-                "Vigenère Cipher",
-                "Monoalphabetic Substitution",
-                "Columnar Transposition",
-            ]
-        )
+        self._populate_classical_combos()
         self.combo_classical.currentIndexChanged.connect(self._on_classical_algo_changed)
-        ctrl_layout.addWidget(self.combo_classical, 0, 1)
 
         self.lbl_class_key = QLabel(i18n.tr("enc_shift_label"))
         self.txt_class_key = QLineEdit("3")
-        self.txt_class_key.setPlaceholderText("Shift (e.g. 3)")
-        ctrl_layout.addWidget(self.lbl_class_key, 0, 2)
-        ctrl_layout.addWidget(self.txt_class_key, 0, 3)
+        self.txt_class_key.setPlaceholderText(i18n.tr("enc_shift_placeholder"))
+        self.txt_class_key.setMinimumWidth(110)
 
         self.btn_caesar_bf = QPushButton(i18n.tr("enc_caesar_bf_btn"))
         self.btn_caesar_bf.clicked.connect(self._show_caesar_bruteforce)
-        ctrl_layout.addWidget(self.btn_caesar_bf, 0, 4)
 
-        # Action Buttons
-        btn_row = QHBoxLayout()
+        row1.addWidget(self.lbl_class_algo)
+        row1.addWidget(self.combo_classical)
+        row1.addSpacing(10)
+        row1.addWidget(self.lbl_class_key)
+        row1.addWidget(self.txt_class_key)
+        row1.addSpacing(10)
+        row1.addWidget(self.btn_caesar_bf)
+        row1.addStretch()
+        ctrl_layout.addLayout(row1)
+
+        # Row 2: Action Buttons
+        row2 = QHBoxLayout()
+        row2.setSpacing(8)
         self.btn_class_encrypt = QPushButton(i18n.tr("btn_encrypt"))
         self.btn_class_encrypt.setObjectName("primary_btn")
         self.btn_class_encrypt.clicked.connect(lambda: self._execute_classical(decrypt=False))
@@ -113,12 +115,12 @@ class EncryptionPage(QWidget):
         self.btn_class_import = QPushButton(i18n.tr("btn_import"))
         self.btn_class_import.clicked.connect(self._import_classical_text)
 
-        btn_row.addWidget(self.btn_class_encrypt)
-        btn_row.addWidget(self.btn_class_decrypt)
-        btn_row.addWidget(self.btn_class_import)
-        btn_row.addStretch()
+        row2.addWidget(self.btn_class_encrypt)
+        row2.addWidget(self.btn_class_decrypt)
+        row2.addWidget(self.btn_class_import)
+        row2.addStretch()
+        ctrl_layout.addLayout(row2)
 
-        ctrl_layout.addLayout(btn_row, 1, 0, 1, 5)
         layout.addWidget(ctrl_card)
 
         # Splitter for Input and Output
@@ -128,20 +130,21 @@ class EncryptionPage(QWidget):
         in_frame = QFrame()
         in_frame.setObjectName("card")
         in_layout = QVBoxLayout(in_frame)
-        in_layout.setContentsMargins(10, 8, 10, 8)
+        in_layout.setContentsMargins(12, 10, 12, 10)
+        in_layout.setSpacing(8)
 
         in_hdr = QHBoxLayout()
-        lbl_in = QLabel(i18n.tr("enc_input_label"))
-        lbl_in.setStyleSheet("font-weight: 600; color: #E02235;")
-        btn_detect = QPushButton(i18n.tr("btn_auto_detect"))
-        btn_detect.clicked.connect(self._auto_detect_classical_input)
-        in_hdr.addWidget(lbl_in)
+        self.lbl_class_in = QLabel(i18n.tr("enc_input_label"))
+        self.lbl_class_in.setStyleSheet("font-weight: 600; color: #E02235;")
+        self.btn_detect_class = QPushButton(i18n.tr("btn_auto_detect"))
+        self.btn_detect_class.clicked.connect(self._auto_detect_classical_input)
+        in_hdr.addWidget(self.lbl_class_in)
         in_hdr.addStretch()
-        in_hdr.addWidget(btn_detect)
+        in_hdr.addWidget(self.btn_detect_class)
         in_layout.addLayout(in_hdr)
 
         self.txt_class_in = QPlainTextEdit()
-        self.txt_class_in.setPlaceholderText("Enter plaintext or ciphertext here...")
+        self.txt_class_in.setPlaceholderText(i18n.tr("enc_input_placeholder"))
         in_layout.addWidget(self.txt_class_in)
 
         # Output Box
@@ -153,43 +156,58 @@ class EncryptionPage(QWidget):
 
         return widget
 
+    def _populate_classical_combos(self):
+        curr_key = self.combo_classical.currentData() if hasattr(self, "combo_classical") and self.combo_classical.count() > 0 else "caesar"
+        self.combo_classical.blockSignals(True)
+        self.combo_classical.clear()
+        self.combo_classical.addItem(i18n.tr("enc_algo_caesar"), "caesar")
+        self.combo_classical.addItem(i18n.tr("enc_algo_atbash"), "atbash")
+        self.combo_classical.addItem(i18n.tr("enc_algo_vigenere"), "vigenere")
+        self.combo_classical.addItem(i18n.tr("enc_algo_substitution"), "substitution")
+        self.combo_classical.addItem(i18n.tr("enc_algo_transposition"), "transposition")
+
+        idx = self.combo_classical.findData(curr_key)
+        if idx >= 0:
+            self.combo_classical.setCurrentIndex(idx)
+        self.combo_classical.blockSignals(False)
+
     def _on_classical_algo_changed(self, idx: int):
-        algo = self.combo_classical.currentText()
-        if "Caesar" in algo:
+        algo_key = self.combo_classical.currentData()
+        if algo_key == "caesar":
             self.lbl_class_key.setVisible(True)
             self.txt_class_key.setVisible(True)
             self.lbl_class_key.setText(i18n.tr("enc_shift_label"))
             self.txt_class_key.setText("3")
-            self.txt_class_key.setPlaceholderText("Shift 1-25")
+            self.txt_class_key.setPlaceholderText(i18n.tr("enc_shift_placeholder"))
             self.btn_caesar_bf.setVisible(True)
-        elif "Atbash" in algo:
+        elif algo_key == "atbash":
             self.lbl_class_key.setVisible(False)
             self.txt_class_key.setVisible(False)
             self.btn_caesar_bf.setVisible(False)
-        elif "Vigenère" in algo:
+        elif algo_key == "vigenere":
             self.lbl_class_key.setVisible(True)
             self.txt_class_key.setVisible(True)
-            self.lbl_class_key.setText("Keyword (A-Z):")
+            self.lbl_class_key.setText(i18n.tr("enc_key_keyword"))
             self.txt_class_key.setText("KEYWORD")
-            self.txt_class_key.setPlaceholderText("Alphabetic key (e.g. SECRET)")
+            self.txt_class_key.setPlaceholderText(i18n.tr("enc_key_keyword_ph"))
             self.btn_caesar_bf.setVisible(False)
-        elif "Substitution" in algo:
+        elif algo_key == "substitution":
             self.lbl_class_key.setVisible(True)
             self.txt_class_key.setVisible(True)
-            self.lbl_class_key.setText("Alphabet Key (26 unique):")
+            self.lbl_class_key.setText(i18n.tr("enc_key_alphabet"))
             self.txt_class_key.setText("QWERTYUIOPASDFGHJKLZXCVBNM")
-            self.txt_class_key.setPlaceholderText("Permutation of A-Z")
+            self.txt_class_key.setPlaceholderText(i18n.tr("enc_key_alphabet_ph"))
             self.btn_caesar_bf.setVisible(False)
-        elif "Transposition" in algo:
+        elif algo_key == "transposition":
             self.lbl_class_key.setVisible(True)
             self.txt_class_key.setVisible(True)
-            self.lbl_class_key.setText("Columns (Int >= 2):")
+            self.lbl_class_key.setText(i18n.tr("enc_key_columns"))
             self.txt_class_key.setText("5")
-            self.txt_class_key.setPlaceholderText("Column count")
+            self.txt_class_key.setPlaceholderText(i18n.tr("enc_key_columns_ph"))
             self.btn_caesar_bf.setVisible(False)
 
     def _execute_classical(self, decrypt: bool = False):
-        algo = self.combo_classical.currentText()
+        algo_key = self.combo_classical.currentData()
         text = self.txt_class_in.toPlainText()
         key_val = self.txt_class_key.text()
 
@@ -198,20 +216,20 @@ class EncryptionPage(QWidget):
             return
 
         res = None
-        if "Caesar" in algo:
+        if algo_key == "caesar":
             try:
                 shift = int(key_val.strip())
                 res = self.crypto_service.process_caesar(text, shift, decrypt=decrypt)
             except ValueError:
                 QMessageBox.warning(self, "Validation Error", "Caesar shift must be an integer.")
                 return
-        elif "Atbash" in algo:
+        elif algo_key == "atbash":
             res = self.crypto_service.process_atbash(text)
-        elif "Vigenère" in algo:
+        elif algo_key == "vigenere":
             res = self.crypto_service.process_vigenere(text, key_val, decrypt=decrypt)
-        elif "Substitution" in algo:
+        elif algo_key == "substitution":
             res = self.crypto_service.process_substitution(text, key_val, decrypt=decrypt)
-        elif "Transposition" in algo:
+        elif algo_key == "transposition":
             res = self.crypto_service.process_transposition(text, key_val, decrypt=decrypt)
 
         if res:
@@ -232,12 +250,12 @@ class EncryptionPage(QWidget):
 
         candidates = CaesarCipher.brute_force(text)
         dlg = QDialog(self)
-        dlg.setWindowTitle("Caesar Cipher — 25 Shift Brute-Force Explorer")
+        dlg.setWindowTitle(i18n.tr("enc_caesar_explorer_title"))
         dlg.resize(650, 450)
         lay = QVBoxLayout(dlg)
 
         table = QTableWidget(len(candidates), 2)
-        table.setHorizontalHeaderLabels(["Shift (Key)", "Decrypted Candidate Text"])
+        table.setHorizontalHeaderLabels([i18n.tr("enc_caesar_col_shift"), i18n.tr("enc_caesar_col_candidate")])
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         for row, (shift, cand) in enumerate(candidates):
@@ -245,7 +263,7 @@ class EncryptionPage(QWidget):
             table.setItem(row, 1, QTableWidgetItem(cand[:120] + ("..." if len(cand) > 120 else "")))
 
         lay.addWidget(table)
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(i18n.tr("btn_close"))
         btn_close.clicked.connect(dlg.accept)
         lay.addWidget(btn_close)
         dlg.exec()
@@ -285,7 +303,9 @@ class EncryptionPage(QWidget):
             )
         elif report.category == DetectedCategory.CAESAR_CIPHER:
             shift = report.metadata.get("shift", 3)
-            self.combo_classical.setCurrentText("Caesar Cipher")
+            idx = self.combo_classical.findData("caesar")
+            if idx >= 0:
+                self.combo_classical.setCurrentIndex(idx)
             self.txt_class_key.setText(str(shift))
             preview = report.metadata.get("preview", "")
             QMessageBox.information(
@@ -296,14 +316,18 @@ class EncryptionPage(QWidget):
                 f"Shift has been automatically set to {shift}. Click 'Decrypt' to decrypt full text.",
             )
         elif report.category == DetectedCategory.CLASSICAL_SUBSTITUTION:
-            self.combo_classical.setCurrentText("Monoalphabetic Substitution")
+            idx = self.combo_classical.findData("substitution")
+            if idx >= 0:
+                self.combo_classical.setCurrentIndex(idx)
             QMessageBox.information(
                 self,
                 "Auto-Detect: Substitution Cipher",
                 f"🎯 {report.summary}\n\n{report.details}",
             )
         elif report.category == DetectedCategory.POLYALPHABETIC_CIPHER:
-            self.combo_classical.setCurrentText("Vigenère Cipher")
+            idx = self.combo_classical.findData("vigenere")
+            if idx >= 0:
+                self.combo_classical.setCurrentIndex(idx)
             QMessageBox.information(
                 self,
                 "Auto-Detect: Polyalphabetic Cipher",
@@ -332,9 +356,9 @@ class EncryptionPage(QWidget):
         layout.setSpacing(12)
 
         self.modern_tabs = QTabWidget()
-        self.modern_tabs.addTab(self._create_aes_subtab(), "AES-GCM (Authenticated)")
-        self.modern_tabs.addTab(self._create_rsa_oaep_subtab(), "RSA-OAEP (Public Key)")
-        self.modern_tabs.addTab(self._create_rsa_pss_subtab(), "RSA-PSS (Digital Signature)")
+        self.modern_tabs.addTab(self._create_aes_subtab(), i18n.tr("enc_modern_aes_tab"))
+        self.modern_tabs.addTab(self._create_rsa_oaep_subtab(), i18n.tr("enc_modern_rsa_oaep_tab"))
+        self.modern_tabs.addTab(self._create_rsa_pss_subtab(), i18n.tr("enc_modern_rsa_pss_tab"))
 
         layout.addWidget(self.modern_tabs)
         return widget
@@ -344,33 +368,34 @@ class EncryptionPage(QWidget):
         lay = QVBoxLayout(w)
         lay.setSpacing(10)
 
-        key_box = QGroupBox(i18n.tr("enc_aes_key_info"))
-        kb_lay = QHBoxLayout(key_box)
+        self.key_box_aes = QGroupBox(i18n.tr("enc_aes_key_info"))
+        kb_lay = QHBoxLayout(self.key_box_aes)
         self.txt_aes_key = QLineEdit()
         self.txt_aes_key.setPlaceholderText("64 hexadecimal characters (e.g. generated key)")
-        btn_gen_aes = QPushButton(i18n.tr("btn_generate_key"))
-        btn_gen_aes.clicked.connect(self._gen_aes_key)
+        self.btn_gen_aes = QPushButton(i18n.tr("btn_generate_key"))
+        self.btn_gen_aes.clicked.connect(self._gen_aes_key)
         kb_lay.addWidget(self.txt_aes_key)
-        kb_lay.addWidget(btn_gen_aes)
-        lay.addWidget(key_box)
+        kb_lay.addWidget(self.btn_gen_aes)
+        lay.addWidget(self.key_box_aes)
 
         # Optional AAD
         aad_box = QHBoxLayout()
-        aad_box.addWidget(QLabel(i18n.tr("enc_aes_aad_label")))
+        self.lbl_aes_aad = QLabel(i18n.tr("enc_aes_aad_label"))
+        aad_box.addWidget(self.lbl_aes_aad)
         self.txt_aes_aad = QLineEdit()
-        self.txt_aes_aad.setPlaceholderText("Optional Associated Authenticated Data (unencrypted)")
+        self.txt_aes_aad.setPlaceholderText(i18n.tr("enc_aes_aad_placeholder"))
         aad_box.addWidget(self.txt_aes_aad)
         lay.addLayout(aad_box)
 
         # Buttons
         btn_row = QHBoxLayout()
-        btn_enc = QPushButton(i18n.tr("btn_encrypt"))
-        btn_enc.setObjectName("primary_btn")
-        btn_enc.clicked.connect(self._encrypt_aes)
-        btn_dec = QPushButton(i18n.tr("btn_decrypt"))
-        btn_dec.clicked.connect(self._decrypt_aes)
-        btn_row.addWidget(btn_enc)
-        btn_row.addWidget(btn_dec)
+        self.btn_aes_enc = QPushButton(i18n.tr("btn_encrypt"))
+        self.btn_aes_enc.setObjectName("primary_btn")
+        self.btn_aes_enc.clicked.connect(self._encrypt_aes)
+        self.btn_aes_dec = QPushButton(i18n.tr("btn_decrypt"))
+        self.btn_aes_dec.clicked.connect(self._decrypt_aes)
+        btn_row.addWidget(self.btn_aes_enc)
+        btn_row.addWidget(self.btn_aes_dec)
         btn_row.addStretch()
         lay.addLayout(btn_row)
 
@@ -380,19 +405,18 @@ class EncryptionPage(QWidget):
         in_l = QVBoxLayout(in_f)
 
         in_hdr = QHBoxLayout()
-        in_hdr.addWidget(
-            QLabel("Plaintext (for Encrypt) or JSON Container Envelope (for Decrypt):")
-        )
-        btn_detect_aes = QPushButton(i18n.tr("btn_auto_detect"))
-        btn_detect_aes.clicked.connect(self._auto_detect_aes_input)
+        self.lbl_aes_in = QLabel(i18n.tr("enc_aes_in_label"))
+        self.btn_detect_aes = QPushButton(i18n.tr("btn_auto_detect"))
+        self.btn_detect_aes.clicked.connect(self._auto_detect_aes_input)
+        in_hdr.addWidget(self.lbl_aes_in)
         in_hdr.addStretch()
-        in_hdr.addWidget(btn_detect_aes)
+        in_hdr.addWidget(self.btn_detect_aes)
         in_l.addLayout(in_hdr)
 
         self.txt_aes_in = QPlainTextEdit()
         in_l.addWidget(self.txt_aes_in)
 
-        self.display_aes_out = CodeDisplay("Result (JSON Container or Decrypted Plaintext):")
+        self.display_aes_out = CodeDisplay(i18n.tr("enc_aes_out_label"))
         splitter.addWidget(in_f)
         splitter.addWidget(self.display_aes_out)
         lay.addWidget(splitter)
@@ -457,34 +481,40 @@ class EncryptionPage(QWidget):
         lay.setSpacing(10)
 
         # Warning
-        lay.addWidget(DisclaimerBanner(i18n.tr("enc_rsa_size_limit")))
+        self.banner_rsa = DisclaimerBanner(i18n.tr("enc_rsa_size_limit"))
+        lay.addWidget(self.banner_rsa)
 
         # Keygen row
         kg_card = QFrame()
         kg_card.setObjectName("card")
         kg_lay = QHBoxLayout(kg_card)
-        kg_lay.addWidget(QLabel(i18n.tr("enc_rsa_keysize_label")))
+        self.lbl_rsa_keysize = QLabel(i18n.tr("enc_rsa_keysize_label"))
+        kg_lay.addWidget(self.lbl_rsa_keysize)
         self.spin_rsa_size = QComboBox()
         self.spin_rsa_size.addItems(["2048", "3072", "4096"])
-        btn_gen_rsa = QPushButton(i18n.tr("btn_generate_key"))
-        btn_gen_rsa.clicked.connect(self._gen_rsa_keys)
+        self.btn_gen_rsa = QPushButton(i18n.tr("btn_generate_key"))
+        self.btn_gen_rsa.clicked.connect(self._gen_rsa_keys)
         kg_lay.addWidget(self.spin_rsa_size)
-        kg_lay.addWidget(btn_gen_rsa)
+        kg_lay.addWidget(self.btn_gen_rsa)
         kg_lay.addStretch()
         lay.addWidget(kg_card)
 
         # Keys display
         key_splitter = QSplitter(Qt.Horizontal)
         pub_f = QFrame()
+        pub_f.setObjectName("card")
         pub_l = QVBoxLayout(pub_f)
-        pub_l.addWidget(QLabel(i18n.tr("enc_rsa_pubkey_label")))
+        self.lbl_rsa_pub = QLabel(i18n.tr("enc_rsa_pubkey_label"))
+        pub_l.addWidget(self.lbl_rsa_pub)
         self.txt_rsa_pub = QPlainTextEdit()
         self.txt_rsa_pub.setPlaceholderText("-----BEGIN PUBLIC KEY-----...")
         pub_l.addWidget(self.txt_rsa_pub)
 
         priv_f = QFrame()
+        priv_f.setObjectName("card")
         priv_l = QVBoxLayout(priv_f)
-        priv_l.addWidget(QLabel(i18n.tr("enc_rsa_privkey_label")))
+        self.lbl_rsa_priv = QLabel(i18n.tr("enc_rsa_privkey_label"))
+        priv_l.addWidget(self.lbl_rsa_priv)
         self.txt_rsa_priv = QPlainTextEdit()
         self.txt_rsa_priv.setPlaceholderText("-----BEGIN PRIVATE KEY-----...")
         priv_l.addWidget(self.txt_rsa_priv)
@@ -495,13 +525,13 @@ class EncryptionPage(QWidget):
 
         # Action buttons
         btn_row = QHBoxLayout()
-        btn_enc = QPushButton(i18n.tr("btn_encrypt"))
-        btn_enc.setObjectName("primary_btn")
-        btn_enc.clicked.connect(self._encrypt_rsa)
-        btn_dec = QPushButton(i18n.tr("btn_decrypt"))
-        btn_dec.clicked.connect(self._decrypt_rsa)
-        btn_row.addWidget(btn_enc)
-        btn_row.addWidget(btn_dec)
+        self.btn_rsa_enc = QPushButton(i18n.tr("btn_encrypt"))
+        self.btn_rsa_enc.setObjectName("primary_btn")
+        self.btn_rsa_enc.clicked.connect(self._encrypt_rsa)
+        self.btn_rsa_dec = QPushButton(i18n.tr("btn_decrypt"))
+        self.btn_rsa_dec.clicked.connect(self._decrypt_rsa)
+        btn_row.addWidget(self.btn_rsa_enc)
+        btn_row.addWidget(self.btn_rsa_dec)
         btn_row.addStretch()
         lay.addLayout(btn_row)
 
@@ -510,11 +540,12 @@ class EncryptionPage(QWidget):
         in_f = QFrame()
         in_f.setObjectName("card")
         in_l = QVBoxLayout(in_f)
-        in_l.addWidget(QLabel("Plaintext (to Encrypt) or Base64 Ciphertext (to Decrypt):"))
+        self.lbl_rsa_in = QLabel(i18n.tr("enc_rsa_in_label"))
+        in_l.addWidget(self.lbl_rsa_in)
         self.txt_rsa_in = QPlainTextEdit()
         in_l.addWidget(self.txt_rsa_in)
 
-        self.display_rsa_out = CodeDisplay("Result:")
+        self.display_rsa_out = CodeDisplay(i18n.tr("enc_rsa_out_label"))
         data_splitter.addWidget(in_f)
         data_splitter.addWidget(self.display_rsa_out)
         lay.addWidget(data_splitter)
@@ -566,33 +597,35 @@ class EncryptionPage(QWidget):
         lay = QVBoxLayout(w)
         lay.setSpacing(10)
 
-        banner = DisclaimerBanner(
-            "DIGITAL SIGNATURES: RSA-PSS creates a cryptographic proof of authenticity and integrity using the private key. "
-            "Verification is performed with the sender's public key."
-        )
-        lay.addWidget(banner)
+        self.banner_pss = DisclaimerBanner(i18n.tr("enc_pss_banner"))
+        lay.addWidget(self.banner_pss)
 
         # Message input
         msg_f = QFrame()
         msg_f.setObjectName("card")
         msg_l = QVBoxLayout(msg_f)
-        msg_l.addWidget(QLabel("Message to Sign or Verify:"))
+        self.lbl_pss_msg = QLabel(i18n.tr("enc_pss_msg_label"))
+        msg_l.addWidget(self.lbl_pss_msg)
         self.txt_pss_msg = QPlainTextEdit()
-        self.txt_pss_msg.setPlaceholderText("Enter message text...")
+        self.txt_pss_msg.setPlaceholderText(i18n.tr("enc_pss_msg_ph"))
         msg_l.addWidget(self.txt_pss_msg)
         lay.addWidget(msg_f)
 
         # Key Inputs
         key_splitter = QSplitter(Qt.Horizontal)
         priv_f = QFrame()
+        priv_f.setObjectName("card")
         priv_l = QVBoxLayout(priv_f)
-        priv_l.addWidget(QLabel("Private Key (PEM) for Signing:"))
+        self.lbl_pss_priv = QLabel(i18n.tr("enc_pss_priv_label"))
+        priv_l.addWidget(self.lbl_pss_priv)
         self.txt_pss_priv = QPlainTextEdit()
         priv_l.addWidget(self.txt_pss_priv)
 
         pub_f = QFrame()
+        pub_f.setObjectName("card")
         pub_l = QVBoxLayout(pub_f)
-        pub_l.addWidget(QLabel("Public Key (PEM) for Verification:"))
+        self.lbl_pss_pub = QLabel(i18n.tr("enc_pss_pub_label"))
+        pub_l.addWidget(self.lbl_pss_pub)
         self.txt_pss_pub = QPlainTextEdit()
         pub_l.addWidget(self.txt_pss_pub)
 
@@ -602,20 +635,20 @@ class EncryptionPage(QWidget):
 
         # Buttons
         btn_row = QHBoxLayout()
-        btn_sign = QPushButton(i18n.tr("btn_sign"))
-        btn_sign.setObjectName("primary_btn")
-        btn_sign.clicked.connect(self._sign_pss)
+        self.btn_pss_sign = QPushButton(i18n.tr("btn_sign"))
+        self.btn_pss_sign.setObjectName("primary_btn")
+        self.btn_pss_sign.clicked.connect(self._sign_pss)
 
-        btn_verify = QPushButton(i18n.tr("btn_verify"))
-        btn_verify.clicked.connect(self._verify_pss)
+        self.btn_pss_verify = QPushButton(i18n.tr("btn_verify"))
+        self.btn_pss_verify.clicked.connect(self._verify_pss)
 
-        btn_row.addWidget(btn_sign)
-        btn_row.addWidget(btn_verify)
+        btn_row.addWidget(self.btn_pss_sign)
+        btn_row.addWidget(self.btn_pss_verify)
         btn_row.addStretch()
         lay.addLayout(btn_row)
 
         # Output / Signature Display
-        self.display_pss_sig = CodeDisplay("Digital Signature (Base64) / Verification Status:")
+        self.display_pss_sig = CodeDisplay(i18n.tr("enc_pss_sig_label"))
         lay.addWidget(self.display_pss_sig)
 
         return w
@@ -656,3 +689,66 @@ class EncryptionPage(QWidget):
             QMessageBox.information(self, "Signature Verification", res.data)
         else:
             QMessageBox.warning(self, "Signature Verification", res.data)
+
+    def retranslate_ui(self):
+        """Update all text elements when interface language is toggled."""
+        self.lbl_title.setText(i18n.tr("nav_encryption"))
+
+        # Main tabs
+        self.tabs.setTabText(0, i18n.tr("enc_tab_classical"))
+        self.tabs.setTabText(1, i18n.tr("enc_tab_modern"))
+
+        # Classical Tab
+        self.banner_classical.set_text(i18n.tr("enc_warning_classical"))
+        self.lbl_class_algo.setText(i18n.tr("enc_algo_label"))
+        self._populate_classical_combos()
+        self._on_classical_algo_changed(self.combo_classical.currentIndex())
+        self.btn_caesar_bf.setText(i18n.tr("enc_caesar_bf_btn"))
+        self.btn_class_encrypt.setText(i18n.tr("btn_encrypt"))
+        self.btn_class_decrypt.setText(i18n.tr("btn_decrypt"))
+        self.btn_class_import.setText(i18n.tr("btn_import"))
+        self.lbl_class_in.setText(i18n.tr("enc_input_label"))
+        self.btn_detect_class.setText(i18n.tr("btn_auto_detect"))
+        self.txt_class_in.setPlaceholderText(i18n.tr("enc_input_placeholder"))
+        self.display_class_out.set_label(i18n.tr("enc_output_label"))
+        self.display_class_out.retranslate_ui()
+
+        # Modern Subtabs
+        self.modern_tabs.setTabText(0, i18n.tr("enc_modern_aes_tab"))
+        self.modern_tabs.setTabText(1, i18n.tr("enc_modern_rsa_oaep_tab"))
+        self.modern_tabs.setTabText(2, i18n.tr("enc_modern_rsa_pss_tab"))
+
+        # AES
+        self.key_box_aes.setTitle(i18n.tr("enc_aes_key_info"))
+        self.btn_gen_aes.setText(i18n.tr("btn_generate_key"))
+        self.lbl_aes_aad.setText(i18n.tr("enc_aes_aad_label"))
+        self.txt_aes_aad.setPlaceholderText(i18n.tr("enc_aes_aad_placeholder"))
+        self.btn_aes_enc.setText(i18n.tr("btn_encrypt"))
+        self.btn_aes_dec.setText(i18n.tr("btn_decrypt"))
+        self.lbl_aes_in.setText(i18n.tr("enc_aes_in_label"))
+        self.btn_detect_aes.setText(i18n.tr("btn_auto_detect"))
+        self.display_aes_out.set_label(i18n.tr("enc_aes_out_label"))
+        self.display_aes_out.retranslate_ui()
+
+        # RSA-OAEP
+        self.banner_rsa.set_text(i18n.tr("enc_rsa_size_limit"))
+        self.lbl_rsa_keysize.setText(i18n.tr("enc_rsa_keysize_label"))
+        self.btn_gen_rsa.setText(i18n.tr("btn_generate_key"))
+        self.lbl_rsa_pub.setText(i18n.tr("enc_rsa_pubkey_label"))
+        self.lbl_rsa_priv.setText(i18n.tr("enc_rsa_privkey_label"))
+        self.btn_rsa_enc.setText(i18n.tr("btn_encrypt"))
+        self.btn_rsa_dec.setText(i18n.tr("btn_decrypt"))
+        self.lbl_rsa_in.setText(i18n.tr("enc_rsa_in_label"))
+        self.display_rsa_out.set_label(i18n.tr("enc_rsa_out_label"))
+        self.display_rsa_out.retranslate_ui()
+
+        # RSA-PSS
+        self.banner_pss.set_text(i18n.tr("enc_pss_banner"))
+        self.lbl_pss_msg.setText(i18n.tr("enc_pss_msg_label"))
+        self.txt_pss_msg.setPlaceholderText(i18n.tr("enc_pss_msg_ph"))
+        self.lbl_pss_priv.setText(i18n.tr("enc_pss_priv_label"))
+        self.lbl_pss_pub.setText(i18n.tr("enc_pss_pub_label"))
+        self.btn_pss_sign.setText(i18n.tr("btn_sign"))
+        self.btn_pss_verify.setText(i18n.tr("btn_verify"))
+        self.display_pss_sig.set_label(i18n.tr("enc_pss_sig_label"))
+        self.display_pss_sig.retranslate_ui()

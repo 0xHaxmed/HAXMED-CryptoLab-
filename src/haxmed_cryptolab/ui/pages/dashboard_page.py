@@ -21,9 +21,8 @@ from PySide6.QtWidgets import (
 
 from haxmed_cryptolab.core.constants import (
     APP_NAME,
-    APP_SLOGAN,
     APP_VERSION,
-    LOGO_SHIELD_PATH,
+    ICON_PNG_PATH,
 )
 from haxmed_cryptolab.engines.analysis.detector import SmartDetector
 from haxmed_cryptolab.models import DetectionReport
@@ -58,44 +57,44 @@ class DashboardPage(QWidget):
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(24, 20, 24, 24)
-        layout.setSpacing(18)
+        layout.setSpacing(16)
 
-        # 1. Branding Header
+        # 1. Branding Header Card
         header_card = QFrame()
         header_card.setObjectName("card")
         header_layout = QHBoxLayout(header_card)
         header_layout.setContentsMargins(18, 14, 18, 14)
-        header_layout.setSpacing(18)
+        header_layout.setSpacing(16)
 
-        if LOGO_SHIELD_PATH.exists():
+        if ICON_PNG_PATH.exists():
             lbl_shield = QLabel()
-            pix = QPixmap(str(LOGO_SHIELD_PATH))
+            pix = QPixmap(str(ICON_PNG_PATH))
             if not pix.isNull():
-                lbl_shield.setPixmap(pix.scaledToHeight(68, Qt.SmoothTransformation))
+                lbl_shield.setPixmap(pix.scaledToHeight(52, Qt.SmoothTransformation))
                 header_layout.addWidget(lbl_shield)
 
         text_vbox = QVBoxLayout()
-        text_vbox.setSpacing(4)
+        text_vbox.setSpacing(3)
 
-        lbl_app = QLabel(
-            f"{APP_NAME} <span style='color:#E02235; font-size:14px; font-weight:bold;'>v{APP_VERSION}</span>"
+        self.lbl_app = QLabel(
+            f"<b>{APP_NAME}</b> <span style='color:#E02235; font-size:14px; font-weight:bold;'>v{APP_VERSION}</span>"
         )
-        lbl_app.setTextFormat(Qt.RichText)
-        lbl_app.setObjectName("section_title")
+        self.lbl_app.setTextFormat(Qt.RichText)
+        self.lbl_app.setObjectName("section_title")
 
-        lbl_slogan = QLabel(f"{APP_SLOGAN} — {i18n.tr('brand_tagline')}")
-        lbl_slogan.setObjectName("section_desc")
+        self.lbl_slogan = QLabel(f"{i18n.tr('app_subtitle')} — {i18n.tr('brand_tagline')}")
+        self.lbl_slogan.setObjectName("section_desc")
 
-        lbl_features = QLabel(
-            "<span style='color:#94A3B8; font-size:11px; font-weight:bold; letter-spacing:1px;'>"
+        self.lbl_features = QLabel(
+            "<span style='color:#94A3B8; font-size:11px; font-weight:600; letter-spacing:0.5px;'>"
             "ENCRYPT • DECRYPT • HASH • RECOVER • ANALYZE"
             "</span>"
         )
-        lbl_features.setTextFormat(Qt.RichText)
+        self.lbl_features.setTextFormat(Qt.RichText)
 
-        text_vbox.addWidget(lbl_app)
-        text_vbox.addWidget(lbl_slogan)
-        text_vbox.addWidget(lbl_features)
+        text_vbox.addWidget(self.lbl_app)
+        text_vbox.addWidget(self.lbl_slogan)
+        text_vbox.addWidget(self.lbl_features)
 
         header_layout.addLayout(text_vbox)
         header_layout.addStretch()
@@ -114,36 +113,44 @@ class DashboardPage(QWidget):
         )
         op_count = str(self.history_service.count_records())
 
-        self.card_os = self._create_stat_card(i18n.tr("dash_os_label"), os_name, platform.machine())
-        self.card_py = self._create_stat_card(
-            i18n.tr("dash_python_ver"), py_ver, "C胞/PySide6 6.12"
+        self.card_os, self.lbl_os_t, self.lbl_os_v, self.lbl_os_s = self._create_stat_card_widget(
+            i18n.tr("dash_os_label"), os_name, platform.machine()
         )
-        self.card_engine = self._create_stat_card(
-            "Engine", "Online", "AES, RSA, SHA, Bcrypt, Argon2"
+        self.card_py, self.lbl_py_t, self.lbl_py_v, self.lbl_py_s = self._create_stat_card_widget(
+            i18n.tr("dash_python_ver"), py_ver, "PySide6 / Qt 6"
         )
-        self.card_history = self._create_stat_card(
-            i18n.tr("dash_history_status"), history_status, f"{op_count} recorded"
+        self.card_eng, self.lbl_eng_t, self.lbl_eng_v, self.lbl_eng_s = (
+            self._create_stat_card_widget(
+                i18n.tr("dash_crypto_status"),
+                i18n.tr("dash_engine_online"),
+                i18n.tr("dash_engine_details"),
+            )
+        )
+        self.card_hist, self.lbl_hist_t, self.lbl_hist_v, self.lbl_hist_s = (
+            self._create_stat_card_widget(
+                i18n.tr("dash_history_status"),
+                history_status,
+                f"{op_count} {i18n.tr('dash_recorded_suffix')}",
+            )
         )
 
         metrics_grid.addWidget(self.card_os, 0, 0)
         metrics_grid.addWidget(self.card_py, 0, 1)
-        metrics_grid.addWidget(self.card_engine, 0, 2)
-        metrics_grid.addWidget(self.card_history, 0, 3)
+        metrics_grid.addWidget(self.card_eng, 0, 2)
+        metrics_grid.addWidget(self.card_hist, 0, 3)
         layout.addLayout(metrics_grid)
 
         # 3. UNIVERSAL CRYPTO INSPECTOR & AUTO-DETECTOR
-        detect_group = QGroupBox(f"🔍 {i18n.tr('dash_autodetect_title')}")
-        d_lay = QVBoxLayout(detect_group)
+        self.detect_group = QGroupBox(f"🔍 {i18n.tr('dash_autodetect_title')}")
+        d_lay = QVBoxLayout(self.detect_group)
         d_lay.setSpacing(10)
 
-        lbl_desc = QLabel(i18n.tr("dash_autodetect_desc"))
-        lbl_desc.setStyleSheet("color: #8C90A0; font-size: 12px;")
-        d_lay.addWidget(lbl_desc)
+        self.lbl_detect_desc = QLabel(i18n.tr("dash_autodetect_desc"))
+        self.lbl_detect_desc.setStyleSheet("color: #9AA0B2; font-size: 12px;")
+        d_lay.addWidget(self.lbl_detect_desc)
 
         self.txt_inspect_in = QPlainTextEdit()
-        self.txt_inspect_in.setPlaceholderText(
-            "Paste any ciphertext, hash digest ($2b$, SHA-256, MD5...), AES container JSON, or RSA key here..."
-        )
+        self.txt_inspect_in.setPlaceholderText(i18n.tr("dash_inspect_placeholder"))
         self.txt_inspect_in.setMaximumHeight(85)
         d_lay.addWidget(self.txt_inspect_in)
 
@@ -176,60 +183,56 @@ class DashboardPage(QWidget):
         r_lay.addWidget(self.lbl_detect_body)
         d_lay.addWidget(self.frame_detect_res)
 
-        layout.addWidget(detect_group)
+        layout.addWidget(self.detect_group)
 
         # 4. Quick Navigation Workflows
-        quick_group = QGroupBox(i18n.tr("dash_quick_actions"))
-        quick_layout = QHBoxLayout(quick_group)
+        self.quick_group = QGroupBox(i18n.tr("dash_quick_actions"))
+        quick_layout = QHBoxLayout(self.quick_group)
         quick_layout.setSpacing(12)
 
-        btn_enc = QPushButton(f"🔒 {i18n.tr('nav_encryption')}")
-        btn_enc.setObjectName("primary_btn")
-        btn_enc.clicked.connect(lambda: self.navigate_requested.emit("encryption"))
+        self.btn_enc = QPushButton(f"🔒  {i18n.tr('nav_encryption')}")
+        self.btn_enc.setObjectName("primary_btn")
+        self.btn_enc.clicked.connect(lambda: self.navigate_requested.emit("encryption"))
 
-        btn_hash = QPushButton(f"#️⃣ {i18n.tr('nav_hash')}")
-        btn_hash.clicked.connect(lambda: self.navigate_requested.emit("hash"))
+        self.btn_hash = QPushButton(f"#️⃣  {i18n.tr('nav_hash')}")
+        self.btn_hash.clicked.connect(lambda: self.navigate_requested.emit("hash"))
 
-        btn_rec = QPushButton(f"🧪 {i18n.tr('nav_recovery')}")
-        btn_rec.clicked.connect(lambda: self.navigate_requested.emit("recovery"))
+        self.btn_rec = QPushButton(f"🧪  {i18n.tr('nav_recovery')}")
+        self.btn_rec.clicked.connect(lambda: self.navigate_requested.emit("recovery"))
 
-        btn_ana = QPushButton(f"📊 {i18n.tr('nav_analyzer')}")
-        btn_ana.clicked.connect(lambda: self.navigate_requested.emit("analyzer"))
+        self.btn_ana = QPushButton(f"📊  {i18n.tr('nav_analyzer')}")
+        self.btn_ana.clicked.connect(lambda: self.navigate_requested.emit("analyzer"))
 
-        quick_layout.addWidget(btn_enc)
-        quick_layout.addWidget(btn_hash)
-        quick_layout.addWidget(btn_rec)
-        quick_layout.addWidget(btn_ana)
-        layout.addWidget(quick_group)
+        quick_layout.addWidget(self.btn_enc)
+        quick_layout.addWidget(self.btn_hash)
+        quick_layout.addWidget(self.btn_rec)
+        quick_layout.addWidget(self.btn_ana)
+        layout.addWidget(self.quick_group)
 
         # 5. Educational Cryptographic Highlights
         edu_card = QFrame()
         edu_card.setObjectName("card")
         edu_layout = QVBoxLayout(edu_card)
-        edu_title = QLabel(f"💡 {i18n.tr('dash_edu_notes')}")
-        edu_title.setStyleSheet("color: #E02235; font-weight: 700; font-size: 14px;")
+        self.edu_title = QLabel(f"💡 {i18n.tr('dash_edu_notes')}")
+        self.edu_title.setStyleSheet("color: #E02235; font-weight: 700; font-size: 14px;")
 
-        edu_content = QLabel(
-            "<b>1. Authenticated Encryption:</b> AES-GCM guarantees both secrecy (confidentiality) and tampering detection (authenticity). Never reuse a Nonce with the same key.<br/>"
-            "<b>2. Asymmetric Limits:</b> RSA-OAEP encrypts messages smaller than key size minus padding (max 190 bytes for RSA-2048). Use hybrid schemes for files.<br/>"
-            "<b>3. Hashing vs Password Storage:</b> Standard SHA-256 is too fast for passwords. Always employ memory-hard salted algorithms like Argon2id or Bcrypt.<br/>"
-            "<b>4. Classical Insecurity:</b> Classical substitution and transposition ciphers preserve letter patterns and are broken in fractions of a second."
-        )
-        edu_content.setWordWrap(True)
-        edu_content.setTextFormat(Qt.RichText)
-        edu_content.setStyleSheet("color: #C2C6D2; line-height: 150%; padding-top: 4px;")
+        self.edu_content = QLabel()
+        self.edu_content.setWordWrap(True)
+        self.edu_content.setTextFormat(Qt.RichText)
+        self.edu_content.setStyleSheet("color: #C2C6D2; line-height: 160%; padding-top: 4px;")
+        self._update_edu_text()
 
-        edu_layout.addWidget(edu_title)
-        edu_layout.addWidget(edu_content)
+        edu_layout.addWidget(self.edu_title)
+        edu_layout.addWidget(self.edu_content)
         layout.addWidget(edu_card)
 
         # 6. Active Task Status Monitor
-        task_group = QGroupBox(i18n.tr("dash_active_tasks"))
-        task_layout = QVBoxLayout(task_group)
+        self.task_group = QGroupBox(i18n.tr("dash_active_tasks"))
+        task_layout = QVBoxLayout(self.task_group)
         self.lbl_active_tasks = QLabel(f"🟢 {i18n.tr('dash_no_tasks')}")
-        self.lbl_active_tasks.setStyleSheet("color: #8C90A0; font-style: italic;")
+        self.lbl_active_tasks.setStyleSheet("color: #9AA0B2; font-style: italic;")
         task_layout.addWidget(self.lbl_active_tasks)
-        layout.addWidget(task_group)
+        layout.addWidget(self.task_group)
 
         layout.addStretch()
         scroll.setWidget(container)
@@ -238,26 +241,68 @@ class DashboardPage(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(scroll)
 
-    def _create_stat_card(self, title: str, value: str, subtitle: str) -> QFrame:
+    def _create_stat_card_widget(self, title: str, value: str, subtitle: str):
         card = QFrame()
         card.setObjectName("card")
         lay = QVBoxLayout(card)
-        lay.setContentsMargins(12, 10, 12, 10)
-        lay.setSpacing(2)
+        lay.setContentsMargins(14, 12, 14, 12)
+        lay.setSpacing(4)
 
         lbl_t = QLabel(title)
-        lbl_t.setStyleSheet("color: #8C90A0; font-size: 11px; font-weight: 600;")
+        lbl_t.setStyleSheet("color: #9AA0B2; font-size: 11px; font-weight: 600;")
         lbl_v = QLabel(value)
-        lbl_v.setStyleSheet(
-            "color: #FFFFFF; font-size: 16px; font-weight: bold; font-family: monospace;"
-        )
+        lbl_v.setStyleSheet("color: #FFFFFF; font-size: 15px; font-weight: bold;")
         lbl_s = QLabel(subtitle)
-        lbl_s.setStyleSheet("color: #E02235; font-size: 10px;")
+        lbl_s.setStyleSheet("color: #E02235; font-size: 11px;")
 
         lay.addWidget(lbl_t)
         lay.addWidget(lbl_v)
         lay.addWidget(lbl_s)
-        return card
+        return card, lbl_t, lbl_v, lbl_s
+
+    def _update_edu_text(self):
+        self.edu_content.setText(
+            f"<b>{i18n.tr('dash_edu_1_title')}:</b> {i18n.tr('dash_edu_1')}<br/><br/>"
+            f"<b>{i18n.tr('dash_edu_2_title')}:</b> {i18n.tr('dash_edu_2')}<br/><br/>"
+            f"<b>{i18n.tr('dash_edu_3_title')}:</b> {i18n.tr('dash_edu_3')}"
+        )
+
+    def retranslate_ui(self):
+        """Update all text on the dashboard upon language switch."""
+        self.lbl_slogan.setText(f"{i18n.tr('app_subtitle')} — {i18n.tr('brand_tagline')}")
+
+        self.lbl_os_t.setText(i18n.tr("dash_os_label"))
+        self.lbl_py_t.setText(i18n.tr("dash_python_ver"))
+        self.lbl_eng_t.setText(i18n.tr("dash_crypto_status"))
+        self.lbl_eng_v.setText(i18n.tr("dash_engine_online"))
+        self.lbl_eng_s.setText(i18n.tr("dash_engine_details"))
+
+        self.lbl_hist_t.setText(i18n.tr("dash_history_status"))
+        hist_status = (
+            i18n.tr("dash_enabled")
+            if self.history_service.config_mgr.config.enable_history
+            else i18n.tr("dash_disabled")
+        )
+        self.lbl_hist_v.setText(hist_status)
+        op_count = str(self.history_service.count_records())
+        self.lbl_hist_s.setText(f"{op_count} {i18n.tr('dash_recorded_suffix')}")
+
+        self.detect_group.setTitle(f"🔍 {i18n.tr('dash_autodetect_title')}")
+        self.lbl_detect_desc.setText(i18n.tr("dash_autodetect_desc"))
+        self.txt_inspect_in.setPlaceholderText(i18n.tr("dash_inspect_placeholder"))
+        self.btn_auto_detect.setText(i18n.tr("btn_auto_detect"))
+
+        self.quick_group.setTitle(i18n.tr("dash_quick_actions"))
+        self.btn_enc.setText(f"🔒  {i18n.tr('nav_encryption')}")
+        self.btn_hash.setText(f"#️⃣  {i18n.tr('nav_hash')}")
+        self.btn_rec.setText(f"🧪  {i18n.tr('nav_recovery')}")
+        self.btn_ana.setText(f"📊  {i18n.tr('nav_analyzer')}")
+
+        self.edu_title.setText(f"💡 {i18n.tr('dash_edu_notes')}")
+        self._update_edu_text()
+
+        self.task_group.setTitle(i18n.tr("dash_active_tasks"))
+        self.lbl_active_tasks.setText(f"🟢 {i18n.tr('dash_no_tasks')}")
 
     def _run_auto_detect(self):
         text = self.txt_inspect_in.toPlainText()
@@ -324,7 +369,5 @@ class DashboardPage(QWidget):
             if self.history_service.config_mgr.config.enable_history
             else i18n.tr("dash_disabled")
         )
-        card_labels = self.card_history.findChildren(QLabel)
-        if len(card_labels) >= 3:
-            card_labels[1].setText(hist_status)
-            card_labels[2].setText(f"{op_count} recorded")
+        self.lbl_hist_v.setText(hist_status)
+        self.lbl_hist_s.setText(f"{op_count} {i18n.tr('dash_recorded_suffix')}")

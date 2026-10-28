@@ -30,7 +30,8 @@ class CodeDisplay(QFrame):
         self.lbl_title = QLabel(title)
         self.lbl_title.setStyleSheet("font-weight: 600; color: #E02235;")
 
-        self.lbl_meta = QLabel("0 chars")
+        chars_word = i18n.tr("enc_chars_count")
+        self.lbl_meta = QLabel(f"0 {chars_word} (0 B)")
         self.lbl_meta.setStyleSheet("color: #717584; font-size: 11px;")
 
         self.btn_copy = QPushButton(i18n.tr("btn_copy"))
@@ -60,6 +61,9 @@ class CodeDisplay(QFrame):
         layout.addLayout(header)
         layout.addWidget(self.text_edit)
 
+    def set_label(self, title: str):
+        self.lbl_title.setText(title)
+
     def set_text(self, text: str):
         self.text_edit.setPlainText(text)
         self._update_meta()
@@ -74,7 +78,17 @@ class CodeDisplay(QFrame):
     def _update_meta(self):
         chars = len(self.text_edit.toPlainText())
         bytes_count = len(self.text_edit.toPlainText().encode("utf-8"))
-        self.lbl_meta.setText(f"{chars:,} chars ({bytes_count:,} bytes)")
+        chars_word = i18n.tr("enc_chars_count")
+        self.lbl_meta.setText(f"{chars:,} {chars_word} ({bytes_count:,} B)")
+
+    def retranslate_ui(self, title: str = None):
+        """Update localized button and title labels."""
+        if title:
+            self.lbl_title.setText(title)
+        self.btn_copy.setText(i18n.tr("btn_copy"))
+        self.btn_clear.setText(i18n.tr("btn_clear"))
+        self.btn_export.setText(i18n.tr("btn_export"))
+        self._update_meta()
 
     def _copy_to_clipboard(self):
         clipboard = QApplication.clipboard()

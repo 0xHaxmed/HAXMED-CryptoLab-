@@ -31,52 +31,57 @@ class HistoryPage(QWidget):
         layout.setContentsMargins(20, 16, 20, 20)
         layout.setSpacing(12)
 
-        lbl_title = QLabel(i18n.tr("hist_title"))
-        lbl_title.setObjectName("section_title")
-        layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(i18n.tr("hist_title"))
+        self.lbl_title.setObjectName("section_title")
+        layout.addWidget(self.lbl_title)
 
-        banner = DisclaimerBanner(i18n.tr("hist_privacy_notice"))
-        layout.addWidget(banner)
+        self.banner = DisclaimerBanner(i18n.tr("hist_privacy_notice"))
+        layout.addWidget(self.banner)
 
         # Toolbar
         tb_card = QFrame()
         tb_card.setObjectName("card")
         tb_lay = QHBoxLayout(tb_card)
+        tb_lay.setContentsMargins(14, 10, 14, 10)
+        tb_lay.setSpacing(8)
 
-        btn_refresh = QPushButton("🔄 Refresh")
-        btn_refresh.clicked.connect(self.refresh_table)
+        self.btn_refresh = QPushButton(i18n.tr("hist_btn_refresh"))
+        self.btn_refresh.clicked.connect(self.refresh_table)
 
-        btn_exp_txt = QPushButton(i18n.tr("hist_btn_export_txt"))
-        btn_exp_txt.clicked.connect(lambda: self._export("txt"))
+        self.btn_exp_txt = QPushButton(i18n.tr("hist_btn_export_txt"))
+        self.btn_exp_txt.clicked.connect(lambda: self._export("txt"))
 
-        btn_exp_json = QPushButton(i18n.tr("hist_btn_export_json"))
-        btn_exp_json.clicked.connect(lambda: self._export("json"))
+        self.btn_exp_json = QPushButton(i18n.tr("hist_btn_export_json"))
+        self.btn_exp_json.clicked.connect(lambda: self._export("json"))
 
-        btn_clear = QPushButton(i18n.tr("hist_btn_clear"))
-        btn_clear.setObjectName("danger_btn")
-        btn_clear.clicked.connect(self._clear_history)
+        self.btn_clear = QPushButton(i18n.tr("hist_btn_clear"))
+        self.btn_clear.setObjectName("danger_btn")
+        self.btn_clear.clicked.connect(self._clear_history)
 
-        tb_lay.addWidget(btn_refresh)
-        tb_lay.addWidget(btn_exp_txt)
-        tb_lay.addWidget(btn_exp_json)
+        tb_lay.addWidget(self.btn_refresh)
+        tb_lay.addWidget(self.btn_exp_txt)
+        tb_lay.addWidget(self.btn_exp_json)
         tb_lay.addStretch()
-        tb_lay.addWidget(btn_clear)
+        tb_lay.addWidget(self.btn_clear)
         layout.addWidget(tb_card)
 
         # Table
         self.table = QTableWidget(0, 6)
-        self.table.setHorizontalHeaderLabels(
-            [
-                "ID",
-                "Timestamp (UTC)",
-                "Operation",
-                "Algorithm",
-                "Status",
-                "Duration (ms)",
-            ]
-        )
+        self._set_headers()
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         layout.addWidget(self.table)
+
+    def _set_headers(self):
+        self.table.setHorizontalHeaderLabels(
+            [
+                i18n.tr("hist_col_id"),
+                i18n.tr("hist_col_ts"),
+                i18n.tr("hist_col_op"),
+                i18n.tr("hist_col_algo"),
+                i18n.tr("hist_col_status"),
+                i18n.tr("hist_col_dur"),
+            ]
+        )
 
     def refresh_table(self):
         records = self.history_service.get_recent_history(limit=200)
@@ -123,3 +128,13 @@ class HistoryPage(QWidget):
             QMessageBox.information(
                 self, "History Cleared", "All audit history records have been purged."
             )
+
+    def retranslate_ui(self):
+        """Update all text elements when interface language is toggled."""
+        self.lbl_title.setText(i18n.tr("hist_title"))
+        self.banner.set_text(i18n.tr("hist_privacy_notice"))
+        self.btn_refresh.setText(i18n.tr("hist_btn_refresh"))
+        self.btn_exp_txt.setText(i18n.tr("hist_btn_export_txt"))
+        self.btn_exp_json.setText(i18n.tr("hist_btn_export_json"))
+        self.btn_clear.setText(i18n.tr("hist_btn_clear"))
+        self._set_headers()

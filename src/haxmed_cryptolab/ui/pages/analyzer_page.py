@@ -29,30 +29,30 @@ class AnalyzerPage(QWidget):
     def __init__(self, analysis_service: AnalysisService, parent=None):
         super().__init__(parent)
         self.analysis_service = analysis_service
+        self._last_ioc = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 16, 20, 20)
         layout.setSpacing(12)
 
-        lbl_title = QLabel(i18n.tr("ana_title"))
-        lbl_title.setObjectName("section_title")
-        layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(i18n.tr("ana_title"))
+        self.lbl_title.setObjectName("section_title")
+        layout.addWidget(self.lbl_title)
 
-        banner = DisclaimerBanner(
-            "CRYPTANALYSIS HEURISTICS: Frequency distribution and Index of Coincidence (IoC) provide statistical heuristics, "
-            "not absolute proofs. Natural language text must be of sufficient length for frequencies to stabilize."
-        )
-        layout.addWidget(banner)
+        self.banner = DisclaimerBanner(i18n.tr("ana_heuristics_banner"))
+        layout.addWidget(self.banner)
 
         # Input Card
         in_card = QFrame()
         in_card.setObjectName("card")
         in_lay = QVBoxLayout(in_card)
-        in_lay.addWidget(QLabel(i18n.tr("ana_input_label")))
+        in_lay.setContentsMargins(14, 12, 14, 12)
+        in_lay.setSpacing(10)
+
+        self.lbl_in = QLabel(i18n.tr("ana_input_label"))
+        in_lay.addWidget(self.lbl_in)
         self.txt_cipher_in = QPlainTextEdit()
-        self.txt_cipher_in.setPlaceholderText(
-            "Paste ciphertext here to analyze letter frequencies and Caesar rotations..."
-        )
+        self.txt_cipher_in.setPlaceholderText(i18n.tr("ana_input_placeholder"))
         self.txt_cipher_in.setMaximumHeight(100)
         in_lay.addWidget(self.txt_cipher_in)
 
@@ -72,22 +72,21 @@ class AnalyzerPage(QWidget):
         left_widget = QWidget()
         left_lay = QVBoxLayout(left_widget)
         left_lay.setContentsMargins(0, 0, 0, 0)
+        left_lay.setSpacing(8)
 
         ioc_box = QFrame()
         ioc_box.setObjectName("card")
         ioc_lay = QVBoxLayout(ioc_box)
         self.lbl_ioc_val = QLabel(f"{i18n.tr('ana_ioc_label')} --")
         self.lbl_ioc_val.setStyleSheet("font-size: 15px; font-weight: bold; color: #E02235;")
-        lbl_ioc_sub = QLabel(i18n.tr("ana_ioc_explanation"))
-        lbl_ioc_sub.setStyleSheet("color: #8C90A0; font-size: 11px;")
+        self.lbl_ioc_sub = QLabel(i18n.tr("ana_ioc_explanation"))
+        self.lbl_ioc_sub.setStyleSheet("color: #8C90A0; font-size: 11px;")
         ioc_lay.addWidget(self.lbl_ioc_val)
-        ioc_lay.addWidget(lbl_ioc_sub)
+        ioc_lay.addWidget(self.lbl_ioc_sub)
         left_lay.addWidget(ioc_box)
 
         self.table_freq = QTableWidget(26, 4)
-        self.table_freq.setHorizontalHeaderLabels(
-            ["Letter", "Count", "Observed %", "English Exp. %"]
-        )
+        self._set_freq_headers()
         self.table_freq.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         left_lay.addWidget(self.table_freq)
         splitter.addWidget(left_widget)
@@ -96,22 +95,41 @@ class AnalyzerPage(QWidget):
         right_widget = QWidget()
         right_lay = QVBoxLayout(right_widget)
         right_lay.setContentsMargins(0, 0, 0, 0)
+        right_lay.setSpacing(8)
 
-        right_header = QLabel(i18n.tr("ana_caesar_rank_title"))
-        right_header.setStyleSheet(
+        self.right_header = QLabel(i18n.tr("ana_caesar_rank_title"))
+        self.right_header.setStyleSheet(
             "font-weight: 600; color: #FFFFFF; font-size: 13px; padding-bottom: 4px;"
         )
-        right_lay.addWidget(right_header)
+        right_lay.addWidget(self.right_header)
 
         self.table_caesar = QTableWidget(26, 4)
-        self.table_caesar.setHorizontalHeaderLabels(
-            ["Rank", "Shift", "Chi-Sq Score", "Candidate Plaintext Preview"]
-        )
+        self._set_caesar_headers()
         self.table_caesar.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
         right_lay.addWidget(self.table_caesar)
         splitter.addWidget(right_widget)
 
         layout.addWidget(splitter)
+
+    def _set_freq_headers(self):
+        self.table_freq.setHorizontalHeaderLabels(
+            [
+                i18n.tr("ana_col_letter"),
+                i18n.tr("ana_col_count"),
+                i18n.tr("ana_col_obs"),
+                i18n.tr("ana_col_exp"),
+            ]
+        )
+
+    def _set_caesar_headers(self):
+        self.table_caesar.setHorizontalHeaderLabels(
+            [
+                i18n.tr("ana_rank_col_rank"),
+                i18n.tr("ana_rank_col_shift"),
+                i18n.tr("ana_rank_col_chisq"),
+                i18n.tr("ana_rank_col_preview"),
+            ]
+        )
 
     def _run_analysis(self):
         text = self.txt_cipher_in.toPlainText()
@@ -119,6 +137,7 @@ class AnalyzerPage(QWidget):
             return
 
         counts, pcts, ioc, total_chars = self.analysis_service.analyze_frequencies(text)
+        self._last_ioc = ioc
         self.lbl_ioc_val.setText(f"{i18n.tr('ana_ioc_label')} {ioc:.4f}")
 
         # Populate frequency table
@@ -142,5 +161,21 @@ class AnalyzerPage(QWidget):
             )
             self.table_caesar.setItem(row, 0, QTableWidgetItem(f"#{cand.rank}"))
             self.table_caesar.setItem(row, 1, QTableWidgetItem(f"Shift {cand.shift}"))
-            self.table_caesar.setItem(row, 2, QTableWidgetItem(f"{cand.chi_squared:.1f}"))
+            self.table_caesar.setItem(row, 2, QTableWidgetItem(f"{cand.chi_squared:.2f}"))
             self.table_caesar.setItem(row, 3, QTableWidgetItem(preview))
+
+    def retranslate_ui(self):
+        """Update all text elements when interface language is toggled."""
+        self.lbl_title.setText(i18n.tr("ana_title"))
+        self.banner.set_text(i18n.tr("ana_heuristics_banner"))
+        self.lbl_in.setText(i18n.tr("ana_input_label"))
+        self.txt_cipher_in.setPlaceholderText(i18n.tr("ana_input_placeholder"))
+        self.btn_analyze.setText(f"🔍 {i18n.tr('ana_btn_analyze')}")
+        if self._last_ioc is not None:
+            self.lbl_ioc_val.setText(f"{i18n.tr('ana_ioc_label')} {self._last_ioc:.4f}")
+        else:
+            self.lbl_ioc_val.setText(f"{i18n.tr('ana_ioc_label')} --")
+        self.lbl_ioc_sub.setText(i18n.tr("ana_ioc_explanation"))
+        self.right_header.setText(i18n.tr("ana_caesar_rank_title"))
+        self._set_freq_headers()
+        self._set_caesar_headers()

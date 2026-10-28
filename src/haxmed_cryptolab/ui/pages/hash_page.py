@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -25,7 +24,6 @@ from PySide6.QtWidgets import (
 
 from haxmed_cryptolab.core.constants import LEGACY_INSECURE_HASHES, SUPPORTED_HASH_ALGORITHMS
 from haxmed_cryptolab.engines.analysis.detector import SmartDetector
-from haxmed_cryptolab.engines.hashes.identifier import IDENTIFICATION_DISCLAIMER
 from haxmed_cryptolab.models import DetectedCategory
 from haxmed_cryptolab.services.hash_service import HashService
 from haxmed_cryptolab.ui.i18n import i18n
@@ -46,9 +44,9 @@ class HashPage(QWidget):
         layout.setContentsMargins(20, 16, 20, 20)
         layout.setSpacing(12)
 
-        lbl_title = QLabel(i18n.tr("nav_hash"))
-        lbl_title.setObjectName("section_title")
-        layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(i18n.tr("nav_hash"))
+        self.lbl_title.setObjectName("section_title")
+        layout.addWidget(self.lbl_title)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._create_calc_tab(), i18n.tr("hash_tab_calc"))
@@ -70,43 +68,43 @@ class HashPage(QWidget):
         # Control Row
         ctrl_card = QFrame()
         ctrl_card.setObjectName("card")
-        ctrl_lay = QGridLayout(ctrl_card)
+        ctrl_lay = QVBoxLayout(ctrl_card)
+        ctrl_lay.setContentsMargins(14, 12, 14, 12)
+        ctrl_lay.setSpacing(10)
 
-        ctrl_lay.addWidget(QLabel("Algorithm:"), 0, 0)
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        self.lbl_hash_algo = QLabel(i18n.tr("hash_algo_label"))
         self.combo_hash_algo = QComboBox()
         self.combo_hash_algo.addItems(SUPPORTED_HASH_ALGORITHMS)
         self.combo_hash_algo.currentIndexChanged.connect(self._check_legacy_warning)
-        ctrl_lay.addWidget(self.combo_hash_algo, 0, 1)
+        row.addWidget(self.lbl_hash_algo)
+        row.addWidget(self.combo_hash_algo)
 
-        # Mode Radio
+        row.addSpacing(12)
         self.radio_text = QRadioButton(i18n.tr("hash_mode_text"))
         self.radio_file = QRadioButton(i18n.tr("hash_mode_file"))
         self.radio_text.setChecked(True)
         self.radio_text.toggled.connect(self._toggle_input_mode)
-        mode_box = QHBoxLayout()
-        mode_box.addWidget(self.radio_text)
-        mode_box.addWidget(self.radio_file)
-        ctrl_lay.addLayout(mode_box, 0, 2)
+        row.addWidget(self.radio_text)
+        row.addWidget(self.radio_file)
 
-        # Calculate Button
+        row.addSpacing(12)
         self.btn_calc_hash = QPushButton(i18n.tr("btn_calculate"))
         self.btn_calc_hash.setObjectName("primary_btn")
         self.btn_calc_hash.clicked.connect(self._execute_hash_calculation)
         self.btn_cancel_hash = QPushButton(i18n.tr("btn_cancel"))
         self.btn_cancel_hash.setEnabled(False)
         self.btn_cancel_hash.clicked.connect(self._cancel_file_hash)
-        btn_h = QHBoxLayout()
-        btn_h.addWidget(self.btn_calc_hash)
-        btn_h.addWidget(self.btn_cancel_hash)
-        ctrl_lay.addLayout(btn_h, 0, 3)
+        row.addWidget(self.btn_calc_hash)
+        row.addWidget(self.btn_cancel_hash)
+        row.addStretch()
 
+        ctrl_lay.addLayout(row)
         lay.addWidget(ctrl_card)
 
         # Legacy warning banner
-        self.banner_legacy = DisclaimerBanner(
-            "LEGACY ALGORITHM NOTICE: MD5 and SHA-1 are cryptographically broken for collision resistance. "
-            "They should only be used for legacy checksum verification, never for security."
-        )
+        self.banner_legacy = DisclaimerBanner(i18n.tr("hash_legacy_warning"))
         self.banner_legacy.setVisible(False)
         lay.addWidget(self.banner_legacy)
 
@@ -116,11 +114,12 @@ class HashPage(QWidget):
         tin_l = QVBoxLayout(self.frame_text_in)
 
         t_hdr = QHBoxLayout()
-        t_hdr.addWidget(QLabel("Enter Text to Hash (or paste a Hash to Auto-Detect):"))
-        btn_detect_hash = QPushButton(i18n.tr("btn_auto_detect"))
-        btn_detect_hash.clicked.connect(self._auto_detect_hash_input)
+        self.lbl_text_prompt = QLabel(i18n.tr("hash_enter_text_prompt"))
+        self.btn_detect_hash = QPushButton(i18n.tr("btn_auto_detect"))
+        self.btn_detect_hash.clicked.connect(self._auto_detect_hash_input)
+        t_hdr.addWidget(self.lbl_text_prompt)
         t_hdr.addStretch()
-        t_hdr.addWidget(btn_detect_hash)
+        t_hdr.addWidget(self.btn_detect_hash)
         tin_l.addLayout(t_hdr)
 
         self.txt_hash_in = QPlainTextEdit()
@@ -132,14 +131,15 @@ class HashPage(QWidget):
         self.frame_file_in.setObjectName("card")
         self.frame_file_in.setVisible(False)
         fin_l = QVBoxLayout(self.frame_file_in)
-        fin_l.addWidget(QLabel("Target File:"))
+        self.lbl_file_target = QLabel(i18n.tr("hash_target_file_label"))
+        fin_l.addWidget(self.lbl_file_target)
         file_row = QHBoxLayout()
         self.txt_file_path = QLineEdit()
         self.txt_file_path.setReadOnly(True)
-        btn_browse = QPushButton(i18n.tr("btn_browse"))
-        btn_browse.clicked.connect(self._browse_file_for_hash)
+        self.btn_browse_file = QPushButton(i18n.tr("btn_browse"))
+        self.btn_browse_file.clicked.connect(self._browse_file_for_hash)
         file_row.addWidget(self.txt_file_path)
-        file_row.addWidget(btn_browse)
+        file_row.addWidget(self.btn_browse_file)
         fin_l.addLayout(file_row)
 
         self.progress_file = QProgressBar()
@@ -253,21 +253,23 @@ class HashPage(QWidget):
         card.setObjectName("card")
         c_lay = QVBoxLayout(card)
 
-        c_lay.addWidget(QLabel(i18n.tr("hash_compare_a")))
+        self.lbl_cmp_a = QLabel(i18n.tr("hash_compare_a"))
+        c_lay.addWidget(self.lbl_cmp_a)
         self.txt_cmp_a = QLineEdit()
         self.txt_cmp_a.setPlaceholderText("Hexadecimal digest A")
         c_lay.addWidget(self.txt_cmp_a)
 
-        c_lay.addWidget(QLabel(i18n.tr("hash_compare_b")))
+        self.lbl_cmp_b = QLabel(i18n.tr("hash_compare_b"))
+        c_lay.addWidget(self.lbl_cmp_b)
         self.txt_cmp_b = QLineEdit()
         self.txt_cmp_b.setPlaceholderText("Hexadecimal digest B")
         c_lay.addWidget(self.txt_cmp_b)
 
         btn_row = QHBoxLayout()
-        btn_cmp = QPushButton(i18n.tr("btn_compare"))
-        btn_cmp.setObjectName("primary_btn")
-        btn_cmp.clicked.connect(self._compare_digests)
-        btn_row.addWidget(btn_cmp)
+        self.btn_cmp = QPushButton(i18n.tr("btn_compare"))
+        self.btn_cmp.setObjectName("primary_btn")
+        self.btn_cmp.clicked.connect(self._compare_digests)
+        btn_row.addWidget(self.btn_cmp)
         btn_row.addStretch()
         c_lay.addLayout(btn_row)
 
@@ -277,11 +279,9 @@ class HashPage(QWidget):
         res_card = QFrame()
         res_card.setObjectName("card")
         res_lay = QVBoxLayout(res_card)
-        self.lbl_cmp_status = QLabel("AWAITING INPUT")
+        self.lbl_cmp_status = QLabel(i18n.tr("hash_awaiting_input"))
         self.lbl_cmp_status.setStyleSheet("font-size: 20px; font-weight: bold; color: #8C90A0;")
-        self.lbl_cmp_details = QLabel(
-            "Enter two hexadecimal digests to verify equivalence in constant time."
-        )
+        self.lbl_cmp_details = QLabel(i18n.tr("hash_cmp_details_prompt"))
         self.lbl_cmp_details.setWordWrap(True)
         res_lay.addWidget(self.lbl_cmp_status)
         res_lay.addWidget(self.lbl_cmp_details)
@@ -316,23 +316,29 @@ class HashPage(QWidget):
         lay.setContentsMargins(12, 12, 12, 12)
         lay.setSpacing(12)
 
-        lay.addWidget(DisclaimerBanner(IDENTIFICATION_DISCLAIMER))
+        self.banner_id = DisclaimerBanner(i18n.tr("hash_id_disclaimer"))
+        lay.addWidget(self.banner_id)
 
         in_card = QFrame()
         in_card.setObjectName("card")
         in_l = QHBoxLayout(in_card)
         self.txt_id_input = QLineEdit()
         self.txt_id_input.setPlaceholderText("Enter hash string (Hex, $2b$..., $argon2id$...)")
-        btn_id = QPushButton(i18n.tr("btn_identify"))
-        btn_id.setObjectName("primary_btn")
-        btn_id.clicked.connect(self._identify_hash)
+        self.btn_id = QPushButton(i18n.tr("btn_identify"))
+        self.btn_id.setObjectName("primary_btn")
+        self.btn_id.clicked.connect(self._identify_hash)
         in_l.addWidget(self.txt_id_input)
-        in_l.addWidget(btn_id)
+        in_l.addWidget(self.btn_id)
         lay.addWidget(in_card)
 
         self.table_id = QTableWidget(0, 4)
         self.table_id.setHorizontalHeaderLabels(
-            ["Algorithm", "Bit Length", "Confidence", "Analysis Notes"]
+            [
+                i18n.tr("hash_col_algo"),
+                i18n.tr("hash_col_bits"),
+                i18n.tr("hash_col_conf"),
+                i18n.tr("hash_col_notes"),
+            ]
         )
         self.table_id.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
         lay.addWidget(self.table_id)
@@ -368,20 +374,66 @@ class HashPage(QWidget):
         c_lay = QVBoxLayout(container)
         c_lay.setSpacing(14)
 
-        title = QLabel("Understanding Cryptographic Hash Functions")
-        title.setObjectName("section_title")
-        c_lay.addWidget(title)
+        self.lbl_edu_title = QLabel(i18n.tr("hash_edu_title"))
+        self.lbl_edu_title.setObjectName("section_title")
+        c_lay.addWidget(self.lbl_edu_title)
 
         edu_box = QFrame()
         edu_box.setObjectName("card")
         e_lay = QVBoxLayout(edu_box)
-        lbl_body = QLabel(i18n.tr("hash_edu_text"))
-        lbl_body.setStyleSheet("line-height: 160%; color: #C2C6D2; font-size: 13px;")
-        lbl_body.setWordWrap(True)
-        e_lay.addWidget(lbl_body)
+        self.lbl_edu_body = QLabel(i18n.tr("hash_edu_text"))
+        self.lbl_edu_body.setStyleSheet("line-height: 160%; color: #C2C6D2; font-size: 13px;")
+        self.lbl_edu_body.setWordWrap(True)
+        e_lay.addWidget(self.lbl_edu_body)
         c_lay.addWidget(edu_box)
 
         c_lay.addStretch()
         scroll.setWidget(container)
         lay.addWidget(scroll)
         return w
+
+    def retranslate_ui(self):
+        """Update all text elements when interface language is toggled."""
+        self.lbl_title.setText(i18n.tr("nav_hash"))
+        self.tabs.setTabText(0, i18n.tr("hash_tab_calc"))
+        self.tabs.setTabText(1, i18n.tr("hash_tab_compare"))
+        self.tabs.setTabText(2, i18n.tr("hash_tab_identify"))
+        self.tabs.setTabText(3, i18n.tr("hash_tab_edu"))
+
+        # Tab 1: Calc
+        self.lbl_hash_algo.setText(i18n.tr("hash_algo_label"))
+        self.radio_text.setText(i18n.tr("hash_mode_text"))
+        self.radio_file.setText(i18n.tr("hash_mode_file"))
+        self.btn_calc_hash.setText(i18n.tr("btn_calculate"))
+        self.btn_cancel_hash.setText(i18n.tr("btn_cancel"))
+        self.banner_legacy.set_text(i18n.tr("hash_legacy_warning"))
+        self.lbl_text_prompt.setText(i18n.tr("hash_enter_text_prompt"))
+        self.btn_detect_hash.setText(i18n.tr("btn_auto_detect"))
+        self.lbl_file_target.setText(i18n.tr("hash_target_file_label"))
+        self.btn_browse_file.setText(i18n.tr("btn_browse"))
+        self.display_digest.set_label(i18n.tr("hash_digest_output"))
+        self.display_digest.retranslate_ui()
+
+        # Tab 2: Compare
+        self.lbl_cmp_a.setText(i18n.tr("hash_compare_a"))
+        self.lbl_cmp_b.setText(i18n.tr("hash_compare_b"))
+        self.btn_cmp.setText(i18n.tr("btn_compare"))
+        if not self.txt_cmp_a.text() and not self.txt_cmp_b.text():
+            self.lbl_cmp_status.setText(i18n.tr("hash_awaiting_input"))
+            self.lbl_cmp_details.setText(i18n.tr("hash_cmp_details_prompt"))
+
+        # Tab 3: Identify
+        self.banner_id.set_text(i18n.tr("hash_id_disclaimer"))
+        self.btn_id.setText(i18n.tr("btn_identify"))
+        self.table_id.setHorizontalHeaderLabels(
+            [
+                i18n.tr("hash_col_algo"),
+                i18n.tr("hash_col_bits"),
+                i18n.tr("hash_col_conf"),
+                i18n.tr("hash_col_notes"),
+            ]
+        )
+
+        # Tab 4: Education
+        self.lbl_edu_title.setText(i18n.tr("hash_edu_title"))
+        self.lbl_edu_body.setText(i18n.tr("hash_edu_text"))

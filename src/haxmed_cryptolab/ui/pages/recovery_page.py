@@ -47,13 +47,13 @@ class RecoveryPage(QWidget):
         main_layout.setContentsMargins(20, 16, 20, 20)
         main_layout.setSpacing(12)
 
-        lbl_title = QLabel(i18n.tr("rec_title"))
-        lbl_title.setObjectName("section_title")
-        main_layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(i18n.tr("rec_title"))
+        self.lbl_title.setObjectName("section_title")
+        main_layout.addWidget(self.lbl_title)
 
         # Ethical disclaimer banner
-        banner = DisclaimerBanner(i18n.tr("rec_disclaimer"))
-        main_layout.addWidget(banner)
+        self.banner = DisclaimerBanner(i18n.tr("rec_disclaimer"))
+        main_layout.addWidget(self.banner)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -67,22 +67,25 @@ class RecoveryPage(QWidget):
         target_card = QFrame()
         target_card.setObjectName("card")
         t_lay = QGridLayout(target_card)
+        t_lay.setContentsMargins(14, 12, 14, 12)
         t_lay.setSpacing(10)
 
         # Wordlist row
-        t_lay.addWidget(QLabel(i18n.tr("rec_wordlist_label")), 0, 0)
+        self.lbl_wl_label = QLabel(i18n.tr("rec_wordlist_label"))
+        t_lay.addWidget(self.lbl_wl_label, 0, 0)
         self.txt_wordlist_path = QLineEdit()
         self.txt_wordlist_path.setReadOnly(True)
-        btn_browse_wl = QPushButton(i18n.tr("btn_browse"))
-        btn_browse_wl.clicked.connect(self._browse_wordlist)
-        self.lbl_wl_info = QLabel("No wordlist loaded")
+        self.btn_browse_wl = QPushButton(i18n.tr("btn_browse"))
+        self.btn_browse_wl.clicked.connect(self._browse_wordlist)
+        self.lbl_wl_info = QLabel(i18n.tr("rec_no_wordlist"))
         self.lbl_wl_info.setStyleSheet("color: #E02235; font-size: 11px;")
         t_lay.addWidget(self.txt_wordlist_path, 0, 1)
-        t_lay.addWidget(btn_browse_wl, 0, 2)
+        t_lay.addWidget(self.btn_browse_wl, 0, 2)
         t_lay.addWidget(self.lbl_wl_info, 0, 3)
 
         # Adapter / Algorithm
-        t_lay.addWidget(QLabel(i18n.tr("rec_adapter_label")), 1, 0)
+        self.lbl_adapter = QLabel(i18n.tr("rec_adapter_label"))
+        t_lay.addWidget(self.lbl_adapter, 1, 0)
         self.combo_adapter = QComboBox()
         self.combo_adapter.addItems(
             [
@@ -97,17 +100,19 @@ class RecoveryPage(QWidget):
         t_lay.addWidget(self.combo_adapter, 1, 1, 1, 3)
 
         # Target Hash
-        t_lay.addWidget(QLabel(i18n.tr("rec_target_hash")), 2, 0)
+        self.lbl_target = QLabel(i18n.tr("rec_target_hash"))
+        t_lay.addWidget(self.lbl_target, 2, 0)
         self.txt_target_hash = QLineEdit()
-        self.txt_target_hash.setPlaceholderText("Enter target hash to verify...")
+        self.txt_target_hash.setPlaceholderText(i18n.tr("rec_target_placeholder"))
         t_lay.addWidget(self.txt_target_hash, 2, 1, 1, 3)
 
         lay.addWidget(target_card)
 
         # 2. Transformation Rules Card
-        rules_group = QGroupBox(i18n.tr("rec_rules_group"))
-        r_lay = QGridLayout(rules_group)
-        r_lay.setSpacing(8)
+        self.rules_group = QGroupBox(i18n.tr("rec_rules_group"))
+        r_lay = QGridLayout(self.rules_group)
+        r_lay.setContentsMargins(14, 12, 14, 12)
+        r_lay.setSpacing(10)
 
         self.chk_orig = QCheckBox(i18n.tr("rec_rule_orig"))
         self.chk_orig.setChecked(True)
@@ -121,31 +126,35 @@ class RecoveryPage(QWidget):
         r_lay.addWidget(self.chk_cap, 0, 3)
 
         # Prefix / Suffix
-        r_lay.addWidget(QLabel(i18n.tr("rec_rule_prefix")), 1, 0)
+        self.lbl_prefix = QLabel(i18n.tr("rec_rule_prefix"))
+        r_lay.addWidget(self.lbl_prefix, 1, 0)
         self.txt_prefix = QLineEdit()
-        self.txt_prefix.setPlaceholderText("e.g. admin_")
+        self.txt_prefix.setPlaceholderText(i18n.tr("rec_prefix_placeholder"))
         r_lay.addWidget(self.txt_prefix, 1, 1)
 
-        r_lay.addWidget(QLabel(i18n.tr("rec_rule_suffix")), 1, 2)
+        self.lbl_suffix = QLabel(i18n.tr("rec_rule_suffix"))
+        r_lay.addWidget(self.lbl_suffix, 1, 2)
         self.txt_suffix = QLineEdit()
-        self.txt_suffix.setPlaceholderText("e.g. !")
+        self.txt_suffix.setPlaceholderText(i18n.tr("rec_suffix_placeholder"))
         r_lay.addWidget(self.txt_suffix, 1, 3)
 
         # Numeric Suffix Bounded Range
-        r_lay.addWidget(QLabel(i18n.tr("rec_rule_num_end")), 2, 0)
+        self.lbl_num_range = QLabel(i18n.tr("rec_rule_num_end"))
+        r_lay.addWidget(self.lbl_num_range, 2, 0)
         self.spin_num_range = QSpinBox()
         self.spin_num_range.setRange(0, 9999)
         self.spin_num_range.setValue(0)
         self.spin_num_range.setToolTip("0 = disabled. 99 = append numbers from 0 to 99")
         r_lay.addWidget(self.spin_num_range, 2, 1)
 
-        lay.addWidget(rules_group)
+        lay.addWidget(self.rules_group)
 
         # 3. Execution Control & Progress Card
         prog_card = QFrame()
         prog_card.setObjectName("card")
         p_lay = QVBoxLayout(prog_card)
-        p_lay.setSpacing(8)
+        p_lay.setContentsMargins(14, 12, 14, 12)
+        p_lay.setSpacing(10)
 
         btn_bar = QHBoxLayout()
         self.btn_start = QPushButton(f"▶ {i18n.tr('btn_start')}")
@@ -179,7 +188,7 @@ class RecoveryPage(QWidget):
 
         # 4. Result Display Card
         self.display_result = CodeDisplay(
-            "Recovery Outcome & Verification Details:", read_only=True
+            i18n.tr("rec_results_title"), read_only=True
         )
         lay.addWidget(self.display_result)
 
@@ -197,7 +206,8 @@ class RecoveryPage(QWidget):
                 self._wordlist_path = path
                 self._wordlist_encoding = enc
                 self.txt_wordlist_path.setText(path)
-                self.lbl_wl_info.setText(f"{count:,} words ({enc})")
+                self.lbl_wl_info.setText(f"{count:,} {i18n.tr('rec_words_loaded')} ({enc})")
+                self.lbl_wl_info.setStyleSheet("color: #28A745; font-size: 11px;")
             except Exception as e:
                 QMessageBox.critical(self, "Wordlist Error", str(e))
 
@@ -267,14 +277,16 @@ class RecoveryPage(QWidget):
     def _cancel_recovery(self):
         if self._worker and self._worker.isRunning():
             self._worker.cancel()
-            self.lbl_prog_status.setText("Cancelling recovery task...")
+            self.lbl_prog_status.setText(i18n.tr("rec_cancelling"))
             self.btn_cancel.setEnabled(False)
 
     def _on_worker_progress(self, attempts: int, total_base: int, rate: float):
         if total_base > 0:
             pct = min(100, int((attempts / total_base) * 100))
             self.progress_bar.setValue(pct)
-        self.lbl_prog_status.setText(f"Evaluated {attempts:,} candidates ({rate:,.1f} cands/sec)")
+        self.lbl_prog_status.setText(
+            f"Evaluated {attempts:,} candidates ({rate:,.1f} {i18n.tr('rec_speed_unit')})"
+        )
 
     def _on_match_found(self, match: RecoveryCandidateMatch):
         self._last_match = match
@@ -342,3 +354,36 @@ class RecoveryPage(QWidget):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(report_str)
             QMessageBox.information(self, "Export Complete", f"Report saved to {path}")
+
+    def retranslate_ui(self):
+        """Update all text elements when interface language is toggled."""
+        self.lbl_title.setText(i18n.tr("rec_title"))
+        self.banner.set_text(i18n.tr("rec_disclaimer"))
+        self.lbl_wl_label.setText(i18n.tr("rec_wordlist_label"))
+        self.btn_browse_wl.setText(i18n.tr("btn_browse"))
+        if not self._wordlist_path:
+            self.lbl_wl_info.setText(i18n.tr("rec_no_wordlist"))
+        else:
+            self.lbl_wl_info.setText(
+                f"{self._wordlist_count:,} {i18n.tr('rec_words_loaded')} ({self._wordlist_encoding})"
+            )
+        self.lbl_adapter.setText(i18n.tr("rec_adapter_label"))
+        self.lbl_target.setText(i18n.tr("rec_target_hash"))
+        self.txt_target_hash.setPlaceholderText(i18n.tr("rec_target_placeholder"))
+        self.rules_group.setTitle(i18n.tr("rec_rules_group"))
+        self.chk_orig.setText(i18n.tr("rec_rule_orig"))
+        self.chk_lower.setText(i18n.tr("rec_rule_lower"))
+        self.chk_upper.setText(i18n.tr("rec_rule_upper"))
+        self.chk_cap.setText(i18n.tr("rec_rule_cap"))
+        self.lbl_prefix.setText(i18n.tr("rec_rule_prefix"))
+        self.txt_prefix.setPlaceholderText(i18n.tr("rec_prefix_placeholder"))
+        self.lbl_suffix.setText(i18n.tr("rec_rule_suffix"))
+        self.txt_suffix.setPlaceholderText(i18n.tr("rec_suffix_placeholder"))
+        self.lbl_num_range.setText(i18n.tr("rec_rule_num_end"))
+        self.btn_start.setText(f"▶ {i18n.tr('btn_start')}")
+        self.btn_cancel.setText(f"⏹ {i18n.tr('btn_cancel')}")
+        self.btn_export_report.setText(f"📄 {i18n.tr('btn_export')}")
+        if self._worker is None:
+            self.lbl_prog_status.setText(i18n.tr("rec_status_idle"))
+        self.display_result.set_label(i18n.tr("rec_results_title"))
+        self.display_result.retranslate_ui()

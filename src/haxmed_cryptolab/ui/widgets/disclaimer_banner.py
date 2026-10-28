@@ -10,4 +10,8 @@ class DisclaimerBanner(QLabel):
         super().__init__(text, parent)
         self.setObjectName("disclaimer_banner")
         self.setWordWrap(True)
-        self.setMargin(6)
+        self.setMargin(8)
+
+    def set_text(self, text: str):
+        """Helper alias for setText."""
+        self.setText(text)

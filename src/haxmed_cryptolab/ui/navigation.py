@@ -7,15 +7,15 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
 )
 
 from haxmed_cryptolab.core.constants import (
-    APP_NAME,
     APP_VERSION,
-    LOGO_HORIZONTAL_PATH,
+    ICON_PNG_PATH,
 )
 from haxmed_cryptolab.ui.dialogs.about_dialog import AboutDialog
 from haxmed_cryptolab.ui.i18n import i18n
@@ -37,30 +37,33 @@ class NavigationSidebar(QFrame):
         # 1. Brand Header
         brand_frame = QFrame()
         brand_frame.setObjectName("brand_header")
-        brand_lay = QVBoxLayout(brand_frame)
-        brand_lay.setContentsMargins(4, 4, 4, 12)
-        brand_lay.setSpacing(4)
+        brand_lay = QHBoxLayout(brand_frame)
+        brand_lay.setContentsMargins(4, 6, 4, 12)
+        brand_lay.setSpacing(10)
 
-        if LOGO_HORIZONTAL_PATH.exists():
-            self.lbl_logo = QLabel()
-            self.lbl_logo.setAlignment(Qt.AlignCenter)
-            pix = QPixmap(str(LOGO_HORIZONTAL_PATH))
+        if ICON_PNG_PATH.exists():
+            lbl_icon = QLabel()
+            pix = QPixmap(str(ICON_PNG_PATH))
             if not pix.isNull():
-                self.lbl_logo.setPixmap(pix.scaledToWidth(170, Qt.SmoothTransformation))
-                brand_lay.addWidget(self.lbl_logo)
-            else:
-                self.lbl_brand = QLabel(f"🛡️ {APP_NAME}")
-                self.lbl_brand.setObjectName("brand_title")
-                brand_lay.addWidget(self.lbl_brand)
-        else:
-            self.lbl_brand = QLabel(f"🛡️ {APP_NAME}")
-            self.lbl_brand.setObjectName("brand_title")
-            brand_lay.addWidget(self.lbl_brand)
+                lbl_icon.setPixmap(pix.scaledToHeight(42, Qt.SmoothTransformation))
+                brand_lay.addWidget(lbl_icon)
+
+        text_vbox = QVBoxLayout()
+        text_vbox.setSpacing(2)
+
+        self.lbl_brand = QLabel(
+            "<b>HAXMED</b> <span style='color:#E02235;'>CryptoLab</span>"
+        )
+        self.lbl_brand.setTextFormat(Qt.RichText)
+        self.lbl_brand.setObjectName("brand_title")
 
         self.lbl_tagline = QLabel(f"v{APP_VERSION} — Security Lab")
         self.lbl_tagline.setObjectName("brand_tagline")
-        self.lbl_tagline.setAlignment(Qt.AlignCenter)
-        brand_lay.addWidget(self.lbl_tagline)
+
+        text_vbox.addWidget(self.lbl_brand)
+        text_vbox.addWidget(self.lbl_tagline)
+        brand_lay.addLayout(text_vbox)
+        brand_lay.addStretch()
 
         layout.addWidget(brand_frame)
 
@@ -108,6 +111,11 @@ class NavigationSidebar(QFrame):
             self.nav_buttons[page_key].setChecked(True)
             self.page_changed.emit(page_key)
 
+    def set_active_key(self, page_key: str):
+        """Visually synchronize the active sidebar button."""
+        if page_key in self.nav_buttons:
+            self.nav_buttons[page_key].setChecked(True)
+
     def _show_about(self):
         dlg = AboutDialog(self)
         dlg.exec()
@@ -127,3 +135,4 @@ class NavigationSidebar(QFrame):
             if key in self.nav_buttons:
                 self.nav_buttons[key].setText(f"{icon}  {i18n.tr(i18n_key)}")
         self.btn_about.setText(f"ℹ️  {i18n.tr('nav_about')}")
+

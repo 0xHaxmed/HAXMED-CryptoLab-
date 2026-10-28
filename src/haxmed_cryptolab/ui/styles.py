@@ -5,7 +5,7 @@ DARK_THEME_QSS = """
 QWidget {
     background-color: #141518;
     color: #E2E4E9;
-    font-family: "Segoe UI", "SF Pro Display", "Roboto", "Noto Sans", sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", "Tahoma", "Cairo", "Arial", sans-serif;
     font-size: 13px;
     selection-background-color: #c01525;
     selection-color: #FFFFFF;
@@ -18,58 +18,56 @@ QMainWindow {
 
 /* Surfaces and Cards */
 QFrame#card, QFrame#metric_card, QGroupBox {
-    background-color: #1c1d22;
+    background-color: #1a1b20;
     border: 1px solid #282a32;
     border-radius: 8px;
-    padding: 12px;
-    margin-top: 6px;
+    padding: 14px;
+    margin-top: 8px;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 2px 8px;
+    padding: 2px 10px;
     color: #E02235;
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 13px;
 }
 
 /* Sidebar Navigation */
 QFrame#sidebar {
     background-color: #0f1013;
-    border-right: 1px solid #22242a;
-    min-width: 230px;
-    max-width: 250px;
+    border: none;
+    min-width: 245px;
+    max-width: 270px;
 }
 
 QFrame#brand_header {
     background-color: transparent;
     border-bottom: 1px solid #22242a;
-    padding: 16px 12px;
+    padding: 12px 8px;
 }
 
 QLabel#brand_title {
     color: #FFFFFF;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
-    letter-spacing: 1px;
 }
 
 QLabel#brand_tagline {
     color: #E02235;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* Navigation Buttons */
 QPushButton.nav_btn {
     background-color: transparent;
     color: #A0A4B0;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 6px;
     padding: 10px 14px;
-    text-align: left;
     font-weight: 500;
+    font-size: 13px;
 }
 
 QPushButton.nav_btn:hover {
@@ -78,9 +76,9 @@ QPushButton.nav_btn:hover {
 }
 
 QPushButton.nav_btn:checked, QPushButton.nav_btn[active="true"] {
-    background-color: #24161a;
+    background-color: #2D1A20;
     color: #FFFFFF;
-    border-left: 3px solid #E02235;
+    border: 1px solid #8B1B25;
     font-weight: 600;
 }
 
@@ -92,7 +90,7 @@ QPushButton {
     border-radius: 6px;
     padding: 8px 16px;
     font-weight: 500;
-    min-height: 20px;
+    min-height: 24px;
 }
 
 QPushButton:hover {
@@ -146,8 +144,8 @@ QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox {
     color: #E2E4E9;
     border: 1px solid #2C2F3A;
     border-radius: 6px;
-    padding: 6px 10px;
-    font-family: "Consolas", "Cascadia Code", "Fira Code", monospace;
+    padding: 7px 10px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
     font-size: 13px;
 }
 
@@ -179,12 +177,13 @@ QTabWidget::pane {
 QTabBar::tab {
     background-color: #141518;
     color: #8C90A0;
-    padding: 8px 18px;
+    padding: 9px 20px;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
     border: 1px solid #22242a;
     border-bottom: none;
-    margin-right: 4px;
+    margin-right: 2px;
+    margin-left: 2px;
 }
 
 QTabBar::tab:selected {
@@ -207,14 +206,14 @@ QTableWidget, QTableView {
     gridline-color: #24262f;
     border: 1px solid #282a32;
     border-radius: 6px;
+    font-size: 12px;
 }
 
 QHeaderView::section {
     background-color: #1c1d22;
     color: #A0A4B0;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border: none;
-    border-right: 1px solid #24262f;
     border-bottom: 1px solid #282a32;
     font-weight: 600;
     font-size: 12px;
@@ -246,7 +245,7 @@ QProgressBar {
     background-color: #141518;
     border: 1px solid #282a32;
     border-radius: 6px;
-    height: 16px;
+    height: 18px;
     text-align: center;
     color: #FFFFFF;
     font-size: 11px;
@@ -260,12 +259,11 @@ QProgressBar::chunk {
 
 /* Banners & Labels */
 QLabel#disclaimer_banner {
-    background-color: #281417;
-    border: 1px solid #5A1E24;
-    border-left: 4px solid #E02235;
+    background-color: #241417;
+    border: 1px solid #661D24;
     border-radius: 6px;
     color: #FFC0C5;
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-size: 12px;
 }
 
@@ -285,7 +283,7 @@ LIGHT_THEME_QSS = """
 QWidget {
     background-color: #F8F9FA;
     color: #212529;
-    font-family: "Segoe UI", "SF Pro Display", "Roboto", "Noto Sans", sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", "Tahoma", "Cairo", "Arial", sans-serif;
     font-size: 13px;
     selection-background-color: #C01525;
     selection-color: #FFFFFF;
@@ -299,48 +297,50 @@ QFrame#card, QFrame#metric_card, QGroupBox {
     background-color: #FFFFFF;
     border: 1px solid #DEE2E6;
     border-radius: 8px;
-    padding: 12px;
-    margin-top: 6px;
+    padding: 14px;
+    margin-top: 8px;
 }
 
 QGroupBox::title {
+    subcontrol-origin: margin;
+    padding: 2px 10px;
     color: #C01525;
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 13px;
 }
 
 QFrame#sidebar {
     background-color: #FFFFFF;
-    border-right: 1px solid #DEE2E6;
-    min-width: 230px;
-    max-width: 250px;
+    border: none;
+    min-width: 245px;
+    max-width: 270px;
 }
 
 QFrame#brand_header {
     border-bottom: 1px solid #DEE2E6;
-    padding: 16px 12px;
+    padding: 12px 8px;
 }
 
 QLabel#brand_title {
     color: #121316;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
 }
 
 QLabel#brand_tagline {
     color: #C01525;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 QPushButton.nav_btn {
     background-color: transparent;
     color: #495057;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 6px;
     padding: 10px 14px;
-    text-align: left;
     font-weight: 500;
+    font-size: 13px;
 }
 
 QPushButton.nav_btn:hover {
@@ -351,7 +351,7 @@ QPushButton.nav_btn:hover {
 QPushButton.nav_btn:checked, QPushButton.nav_btn[active="true"] {
     background-color: #FCE8E9;
     color: #C01525;
-    border-left: 3px solid #C01525;
+    border: 1px solid #E8A0A6;
     font-weight: 600;
 }
 
@@ -362,6 +362,7 @@ QPushButton {
     border-radius: 6px;
     padding: 8px 16px;
     font-weight: 500;
+    min-height: 24px;
 }
 
 QPushButton:hover {
@@ -385,8 +386,8 @@ QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox {
     color: #212529;
     border: 1px solid #CED4DA;
     border-radius: 6px;
-    padding: 6px 10px;
-    font-family: "Consolas", monospace;
+    padding: 7px 10px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
     font-size: 13px;
 }
 
@@ -403,10 +404,11 @@ QTabWidget::pane {
 QTabBar::tab {
     background-color: #E9ECEF;
     color: #6C757D;
-    padding: 8px 18px;
+    padding: 9px 20px;
     border: 1px solid #DEE2E6;
     border-bottom: none;
-    margin-right: 4px;
+    margin-right: 2px;
+    margin-left: 2px;
 }
 
 QTabBar::tab:selected {
@@ -420,15 +422,17 @@ QTableWidget, QTableView {
     background-color: #FFFFFF;
     alternate-background-color: #F8F9FA;
     border: 1px solid #DEE2E6;
+    font-size: 12px;
 }
 
 QHeaderView::section {
     background-color: #E9ECEF;
     color: #495057;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border: none;
     border-bottom: 1px solid #CED4DA;
     font-weight: 600;
+    font-size: 12px;
 }
 
 QProgressBar {
@@ -448,10 +452,9 @@ QProgressBar::chunk {
 QLabel#disclaimer_banner {
     background-color: #FFF3CD;
     border: 1px solid #FFEEBA;
-    border-left: 4px solid #856404;
     color: #856404;
     border-radius: 6px;
-    padding: 10px 14px;
+    padding: 12px 16px;
 }
 
 QLabel#section_title {

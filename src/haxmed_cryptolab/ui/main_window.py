@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
     def _switch_page(self, key: str):
         if key in self.pages:
             self.stack.setCurrentWidget(self.pages[key])
+            self.sidebar.set_active_key(key)
             if key == "dashboard" and hasattr(self.page_dashboard, "refresh_stats"):
                 self.page_dashboard.refresh_stats()
             elif key == "history" and hasattr(self.page_history, "refresh_table"):
@@ -146,3 +147,10 @@ class MainWindow(QMainWindow):
     def _on_language_changed(self, lang_code: str):
         self.sidebar.update_texts()
         self.setWindowTitle(f"{i18n.tr('app_title')} v{APP_VERSION}")
+        if hasattr(self, "statusBar") and self.statusBar:
+            self.statusBar.showMessage(
+                f"{i18n.tr('app_title')} v{APP_VERSION} - {i18n.tr('app_subtitle')}"
+            )
+        for page in self.pages.values():
+            if hasattr(page, "retranslate_ui"):
+                page.retranslate_ui()
